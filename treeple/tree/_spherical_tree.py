@@ -612,3 +612,226 @@ class SphericalDecisionTreeRegressor(RegressorMixin, _BaseSphericalDecisionTree)
         if weight <= 0:
             return 0.0
         return max(0.0, weighted_y2 / weight - (weighted_y / weight) ** 2)
+
+
+# Cython-backed public estimators. The pure-Python prototype above is kept in
+# this module as readable reference code while the exported classes below use the
+# same tree-builder architecture as treeple's oblique trees.
+import copy as _copy
+
+from scipy.sparse import issparse as _issparse
+from sklearn.utils._param_validation import Hidden as _Hidden
+from sklearn.utils._param_validation import Interval as _Interval
+from sklearn.utils._param_validation import StrOptions as _StrOptions
+
+from .._lib.sklearn.tree import DecisionTreeClassifier as _SkDecisionTreeClassifier
+from .._lib.sklearn.tree import DecisionTreeRegressor as _SkDecisionTreeRegressor
+from .._lib.sklearn.tree import _criterion as _sk_criterion
+from .._lib.sklearn.tree._criterion import BaseCriterion as _BaseCriterion
+from .._lib.sklearn.tree._tree import BestFirstTreeBuilder as _BestFirstTreeBuilder
+from .._lib.sklearn.tree._tree import DepthFirstTreeBuilder as _DepthFirstTreeBuilder
+from ._spherical_splitter import BestSphericalSplitter as _BestSphericalSplitter
+from ._spherical_tree_backend import SphericalTree as _CythonSphericalTree
+
+
+_CRITERIA_CLF = {
+    "gini": _sk_criterion.Gini,
+    "log_loss": _sk_criterion.Entropy,
+    "entropy": _sk_criterion.Entropy,
+}
+_CRITERIA_REG = {
+    "squared_error": _sk_criterion.MSE,
+    "friedman_mse": _sk_criterion.FriedmanMSE,
+    "absolute_error": _sk_criterion.MAE,
+    "poisson": _sk_criterion.Poisson,
+}
+
+
+class _CythonSphericalTreeMixin:
+    _parameter_constraints_extra = {
+        "n_center_candidates": [_Interval(Integral, 1, None, closed="left")],
+        "radius_candidates": [_Interval(Integral, 1, None, closed="left"), None],
+    }
+
+    def _make_criterion(self, y):
+        if isinstance(self.criterion, _BaseCriterion):
+            return _copy.deepcopy(self.criterion)
+        if self._spherical_task == "classification":
+            return _CRITERIA_CLF[self.criterion](self.n_outputs_, self.n_classes_)
+        return _CRITERIA_REG[self.criterion](self.n_outputs_, y.shape[0])
+
+    @property
+    def node_count_(self):
+        check_is_fitted(self, "tree_")
+        return self.tree_.node_count
+
+    def _build_tree(
+        self,
+        X,
+        y,
+        sample_weight,
+        missing_values_in_feature_mask,
+        min_samples_leaf,
+        min_weight_leaf,
+        max_leaf_nodes,
+        min_samples_split,
+        max_depth,
+        random_state,
+    ):
+        if _issparse(X):
+            raise ValueError(
+                "Sparse input is not supported for spherical trees. "
+                "Please convert your data to a dense array."
+            )
+
+        criterion = self._make_criterion(y)
+        radius_candidates = 0 if self.radius_candidates is None else self.radius_candidates
+        splitter = _BestSphericalSplitter(
+            criterion,
+            self.max_features_,
+            min_samples_leaf,
+            min_weight_leaf,
+            random_state,
+            None,
+            self.n_center_candidates,
+            radius_candidates,
+        )
+
+        if self._spherical_task == "classification":
+            self.tree_ = _CythonSphericalTree(
+                self.n_features_in_,
+                self.n_classes_,
+                self.n_outputs_,
+            )
+        else:
+            self.tree_ = _CythonSphericalTree(
+                self.n_features_in_,
+                np.array([1] * self.n_outputs_, dtype=np.intp),
+                self.n_outputs_,
+            )
+
+        if max_leaf_nodes < 0:
+            builder = _DepthFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                self.min_impurity_decrease,
+                self.store_leaf_values,
+            )
+        else:
+            builder = _BestFirstTreeBuilder(
+                splitter,
+                min_samples_split,
+                min_samples_leaf,
+                min_weight_leaf,
+                max_depth,
+                max_leaf_nodes,
+                self.min_impurity_decrease,
+                self.store_leaf_values,
+            )
+
+        builder.build(self.tree_, X, y, sample_weight, None)
+
+        if self.n_outputs_ == 1 and self._spherical_task == "classification":
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
+
+        self._prune_tree()
+        return self
+
+
+class SphericalDecisionTreeClassifier(_CythonSphericalTreeMixin, _SkDecisionTreeClassifier):
+    """Decision tree classifier using Cython-optimized hypersphere split rules."""
+
+    _spherical_task = "classification"
+    _parameter_constraints = {
+        **_SkDecisionTreeClassifier._parameter_constraints,
+        **_CythonSphericalTreeMixin._parameter_constraints_extra,
+        "criterion": [_StrOptions({"gini", "entropy", "log_loss"}), _Hidden(_BaseCriterion)],
+    }
+
+    def __init__(
+        self,
+        *,
+        criterion="gini",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features=None,
+        min_impurity_decrease=0.0,
+        n_center_candidates=16,
+        radius_candidates=None,
+        random_state=None,
+        class_weight=None,
+        max_leaf_nodes=None,
+        ccp_alpha=0.0,
+        store_leaf_values=False,
+    ):
+        super().__init__(
+            criterion=criterion,
+            splitter="best",
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_features=max_features,
+            random_state=random_state,
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            class_weight=class_weight,
+            ccp_alpha=ccp_alpha,
+            store_leaf_values=store_leaf_values,
+        )
+        self.n_center_candidates = n_center_candidates
+        self.radius_candidates = radius_candidates
+
+
+class SphericalDecisionTreeRegressor(_CythonSphericalTreeMixin, _SkDecisionTreeRegressor):
+    """Decision tree regressor using Cython-optimized hypersphere split rules."""
+
+    _spherical_task = "regression"
+    _parameter_constraints = {
+        **_SkDecisionTreeRegressor._parameter_constraints,
+        **_CythonSphericalTreeMixin._parameter_constraints_extra,
+        "criterion": [
+            _StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            _Hidden(_BaseCriterion),
+        ],
+    }
+
+    def __init__(
+        self,
+        *,
+        criterion="squared_error",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features=None,
+        min_impurity_decrease=0.0,
+        n_center_candidates=16,
+        radius_candidates=None,
+        random_state=None,
+        max_leaf_nodes=None,
+        ccp_alpha=0.0,
+        store_leaf_values=False,
+    ):
+        super().__init__(
+            criterion=criterion,
+            splitter="best",
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_features=max_features,
+            random_state=random_state,
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            ccp_alpha=ccp_alpha,
+            store_leaf_values=store_leaf_values,
+        )
+        self.n_center_candidates = n_center_candidates
+        self.radius_candidates = radius_candidates

@@ -8,6 +8,12 @@ tree_extension_metadata = {
   '_oblique_tree':
     {'sources': ['_oblique_tree.pyx'],
      'override_options': ['cython_language=cpp', 'optimization=3']},
+  '_spherical_splitter':
+    {'sources': ['_spherical_splitter.pyx'],
+     'override_options': ['cython_language=cpp', 'optimization=3']},
+  '_spherical_tree_backend':
+    {'sources': ['_spherical_tree_backend.pyx'],
+     'override_options': ['cython_language=cpp', 'optimization=3']},
   '_utils':
     {'sources': ['_utils.pyx'],
      'override_options': ['cython_language=cpp', 'optimization=3']},
