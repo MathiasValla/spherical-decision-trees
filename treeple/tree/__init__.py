@@ -17,6 +17,7 @@ from ._classes import (
 from ._honest_tree import HonestTreeClassifier
 from ._multiview import MultiViewDecisionTreeClassifier
 from ._neighbors import compute_forest_similarity_matrix
+from ._spherical_tree import SphericalDecisionTreeClassifier, SphericalDecisionTreeRegressor
 
 __all__ = [
     "ExtraObliqueDecisionTreeClassifier",
@@ -34,4 +35,6 @@ __all__ = [
     "ExtraTreeClassifier",
     "ExtraTreeRegressor",
     "MultiViewDecisionTreeClassifier",
+    "SphericalDecisionTreeClassifier",
+    "SphericalDecisionTreeRegressor",
 ]

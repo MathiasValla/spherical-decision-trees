@@ -9,4 +9,8 @@ from ._supervised_forest import (
     PatchObliqueRandomForestClassifier,
     PatchObliqueRandomForestRegressor,
 )
+from ._spherical_forest import (
+    SphericalRandomForestClassifier,
+    SphericalRandomForestRegressor,
+)
 from ._unsupervised_forest import UnsupervisedObliqueRandomForest, UnsupervisedRandomForest

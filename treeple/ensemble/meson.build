@@ -6,6 +6,7 @@ python_sources = [
   '_eiforest.py',
   '_multiview.py',
   '_extensions.py',
+  '_spherical_forest.py',
 ]
 
 py.install_sources(

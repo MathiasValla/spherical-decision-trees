@@ -60,7 +60,16 @@ if not cython.found()
 endif
 
 # r = run_command('git', 'submodule', 'update', '--init', check: false)
-r = run_command('mv', 'treeple/_lib/sklearn_fork/sklearn', 'treeple/_lib/sklearn', check: false)
+fs = import('fs')
+if not fs.exists('treeple/_lib/sklearn')
+  r = run_command(
+    'cp',
+    '-R',
+    'treeple/_lib/sklearn_fork/sklearn',
+    'treeple/_lib/sklearn',
+    check: false,
+  )
+endif
 
 # Setup Python:
 # https://mesonbuild.com/Python-module.html

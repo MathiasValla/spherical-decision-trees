@@ -59,6 +59,10 @@ else:
             PatchObliqueRandomForestClassifier,
             PatchObliqueRandomForestRegressor,
         )
+        from .ensemble._spherical_forest import (
+            SphericalRandomForestClassifier,
+            SphericalRandomForestRegressor,
+        )
         from .ensemble._honest_forest import HonestForestClassifier
     except ImportError as e:
         print(e.msg)
@@ -81,6 +85,8 @@ else:
         "ObliqueRandomForestRegressor",
         "PatchObliqueRandomForestClassifier",
         "PatchObliqueRandomForestRegressor",
+        "SphericalRandomForestClassifier",
+        "SphericalRandomForestRegressor",
         "UnsupervisedRandomForest",
         "UnsupervisedObliqueRandomForest",
         "HonestForestClassifier",
