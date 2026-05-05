@@ -1,0 +1,3 @@
+node,depth,left_child_inside,right_child_outside,n_node_samples,impurity,center_petal_length_standardized,center_petal_width_standardized,center_petal_length_original_cm,center_petal_width_original_cm,radius_standardized,radius_squared_standardized,inside_rule
+0,0,1,2,150,0.6666666666666667,-1.3049873113632202,-1.2548935413360596,1.4620000186023696,0.24599996117829537,1.0609266819915033,1.1255654245615005,(x_petal_length - center_petal_length)^2 + (x_petal_width - center_petal_width)^2 <= radius^2
+2,1,3,4,100,0.5,-0.14664055407047272,-0.26238682866096497,3.5000000129608675,0.9999999939409715,1.0604246571407785,1.1245004534721375,(x_petal_length - center_petal_length)^2 + (x_petal_width - center_petal_width)^2 <= radius^2

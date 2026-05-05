@@ -389,7 +389,9 @@ def fold_margin_table(raw: pd.DataFrame, regime: pd.DataFrame) -> pd.DataFrame:
         std = float(margins.std(ddof=1)) if margins.size > 1 else 0.0
         se = std / math.sqrt(margins.size) if margins.size > 1 else 0.0
         all_positive = bool((margins > 0).all())
+        all_negative = bool((margins < 0).all())
         two_se_consistent = bool(mean > 0 and (se <= EPS or mean > 2 * se))
+        two_se_consistent_loss = bool(mean < 0 and (se <= EPS or abs(mean) > 2 * se))
         rows.append(
             {
                 "comparison": row.comparison,
@@ -405,7 +407,9 @@ def fold_margin_table(raw: pd.DataFrame, regime: pd.DataFrame) -> pd.DataFrame:
                 "positive_fold_count": int((margins > 0).sum()),
                 "n_folds": int(margins.size),
                 "all_folds_positive": all_positive,
+                "all_folds_negative": all_negative,
                 "two_se_consistent": two_se_consistent,
+                "two_se_consistent_loss": two_se_consistent_loss,
                 "practical_margin_win": bool(
                     all_positive and mean >= PRACTICAL_MARGIN[row.task]
                 ),
@@ -414,6 +418,17 @@ def fold_margin_table(raw: pd.DataFrame, regime: pd.DataFrame) -> pd.DataFrame:
                     all_positive
                     and two_se_consistent
                     and mean >= PRACTICAL_MARGIN[row.task]
+                ),
+                "practical_margin_loss": bool(
+                    all_negative and mean <= -PRACTICAL_MARGIN[row.task]
+                ),
+                "large_margin_loss": bool(
+                    all_negative and mean <= -LARGE_MARGIN[row.task]
+                ),
+                "consistent_practical_loss": bool(
+                    all_negative
+                    and two_se_consistent_loss
+                    and mean <= -PRACTICAL_MARGIN[row.task]
                 ),
             }
         )
@@ -569,6 +584,12 @@ def mine_rules(
                         "large_margin_win_rate": float(
                             subset["large_margin_win"].fillna(False).mean()
                         ),
+                        "consistent_practical_loss_rate": float(
+                            subset["consistent_practical_loss"].fillna(False).mean()
+                        ),
+                        "large_margin_loss_rate": float(
+                            subset["large_margin_loss"].fillna(False).mean()
+                        ),
                     }
                 )
     rules = pd.DataFrame(rows)
@@ -608,6 +629,10 @@ def summarize_contexts(enriched: pd.DataFrame) -> pd.DataFrame:
                 median_spherical_margin=("spherical_margin", "median"),
                 consistent_practical_win_rate=(
                     "consistent_practical_win",
+                    lambda s: s.fillna(False).mean(),
+                ),
+                consistent_practical_loss_rate=(
+                    "consistent_practical_loss",
                     lambda s: s.fillna(False).mean(),
                 ),
             )
@@ -680,6 +705,64 @@ def plot_top_rules(rules: pd.DataFrame) -> Path | None:
     return path
 
 
+def plot_poor_rules(rules: pd.DataFrame) -> Path | None:
+    selected_rows = []
+    for (comparison, task), frame in rules.groupby(["comparison", "task"]):
+        candidates = frame[
+            (frame["support"] >= 8)
+            & (frame["spherical_win_rate"] < frame["baseline_win_rate"])
+            & (frame["mean_spherical_margin"] < 0)
+        ].copy()
+        candidates = candidates.sort_values(
+            ["spherical_win_rate", "mean_spherical_margin", "support"],
+            ascending=[True, True, False],
+        )
+        selected_rows.append(candidates.head(5))
+    if not selected_rows:
+        return None
+
+    selected = pd.concat(selected_rows, ignore_index=True)
+    if selected.empty:
+        return None
+    selected["label"] = (
+        selected["comparison"]
+        + " / "
+        + selected["task"]
+        .str.replace("classification", "class.", regex=False)
+        .str.replace("regression", "reg.", regex=False)
+        + " | "
+        + selected["rule"]
+    )
+    selected["label"] = selected["label"].str.wrap(62)
+    selected = selected.sort_values("mean_spherical_margin", ascending=False)
+
+    height = max(8.0, 0.82 * selected.shape[0])
+    fig, ax = plt.subplots(figsize=(14.0, height))
+    ax.barh(selected["label"], selected["mean_spherical_margin"], color="#4c78a8", alpha=0.82)
+    ax.axvline(0, color="#111111", linewidth=0.9)
+    for y, (_, row) in enumerate(selected.iterrows()):
+        ax.text(
+            min(row["mean_spherical_margin"] - 0.015, -0.01),
+            y,
+            f"n={int(row['support'])}, win={row['spherical_win_rate']:.2f}",
+            va="center",
+            ha="right",
+            fontsize=8,
+        )
+    x_min = min(float(selected["mean_spherical_margin"].min()) * 1.18, -0.05)
+    ax.set_xlim(x_min, 0.05)
+    ax.set_xlabel("Mean spherical margin inside rule")
+    ax.set_title("Top descriptive rules for poor spherical performance")
+    ax.grid(axis="x", color="#d9dde3", alpha=0.8)
+    ax.tick_params(axis="y", labelsize=8)
+    fig.subplots_adjust(left=0.36, right=0.87, bottom=0.08, top=0.95)
+
+    path = FIGURES_DIR / "spherical_heuristic_poor_rules.png"
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+    return path
+
+
 def _md_table(df: pd.DataFrame, floatfmt: str = ".3f") -> str:
     if df.empty:
         return "_No rows._"
@@ -692,6 +775,7 @@ def write_report(
     context_summary: pd.DataFrame,
     fold_margins: pd.DataFrame,
     rule_plot: Path | None,
+    poor_rule_plot: Path | None,
 ) -> Path:
     path = RESULTS_DIR / "spherical_pmlb_heuristic_analysis.md"
 
@@ -711,6 +795,29 @@ def write_report(
             "lift_vs_baseline",
             "mean_spherical_margin",
             "consistent_practical_win_rate",
+        ]
+        return frame[cols].head(n)
+
+    def poor_rules(comparison: str, task: str, n: int = 8) -> pd.DataFrame:
+        frame = rules[
+            (rules["comparison"] == comparison)
+            & (rules["task"] == task)
+            & (rules["support"] >= 8)
+            & (rules["spherical_win_rate"] < rules["baseline_win_rate"])
+            & (rules["mean_spherical_margin"] < 0)
+        ].copy()
+        frame = frame.sort_values(
+            ["spherical_win_rate", "mean_spherical_margin", "support"],
+            ascending=[True, True, False],
+        )
+        cols = [
+            "rule",
+            "support",
+            "baseline_win_rate",
+            "spherical_win_rate",
+            "lift_vs_baseline",
+            "mean_spherical_margin",
+            "consistent_practical_loss_rate",
         ]
         return frame[cols].head(n)
 
@@ -734,18 +841,43 @@ def write_report(
     )
     strong = strong.sort_values("fold_margin_mean", ascending=False)
 
+    losses = fold_margins[fold_margins["consistent_practical_loss"]].copy()
+    losses = losses.merge(
+        enriched[
+            [
+                "comparison",
+                "task",
+                "dataset",
+                "n_used_samples",
+                "n_features",
+                "n_over_p",
+                "target_balance",
+                "target_value_scale",
+                "predictor_profile",
+            ]
+        ],
+        on=["comparison", "task", "dataset"],
+        how="left",
+    )
+    losses = losses.sort_values("fold_margin_mean", ascending=True)
+
     strong_counts = (
         fold_margins.groupby(["comparison", "task"], as_index=False)
         .agg(
             n_datasets=("dataset", "nunique"),
             consistent_practical_wins=("consistent_practical_win", "sum"),
             large_margin_wins=("large_margin_win", "sum"),
+            consistent_practical_losses=("consistent_practical_loss", "sum"),
+            large_margin_losses=("large_margin_loss", "sum"),
         )
         .sort_values(["comparison", "task"])
     )
 
     plot_line = (
         f"- `figures/{rule_plot.name}`\n" if rule_plot is not None else ""
+    )
+    poor_plot_line = (
+        f"- `figures/{poor_rule_plot.name}`\n" if poor_rule_plot is not None else ""
     )
     strong_cols = [
         "comparison",
@@ -766,10 +898,18 @@ def write_report(
     for col in ["fold_margin_mean", "fold_margin_min", "n_over_p"]:
         strong_display[col] = strong_display[col].astype(float).round(3)
 
+    loss_display = losses[strong_cols].head(25).copy()
+    for col in ["fold_margin_mean", "fold_margin_min", "n_over_p"]:
+        loss_display[col] = loss_display[col].astype(float).round(3)
+
     forest_class_rules = top_rules("forests", "classification")
     tree_class_rules = top_rules("trees", "classification")
     forest_reg_rules = top_rules("forests", "regression")
     tree_reg_rules = top_rules("trees", "regression")
+    forest_class_poor_rules = poor_rules("forests", "classification")
+    tree_class_poor_rules = poor_rules("trees", "classification")
+    forest_reg_poor_rules = poor_rules("forests", "regression")
+    tree_reg_poor_rules = poor_rules("trees", "regression")
 
     text = f"""# Spherical Heuristic Analysis
 
@@ -789,6 +929,8 @@ without changing the prediction problem, and the benchmark scores use R2.
 - `spherical_pmlb_heuristic_context_summary.csv`
 - `spherical_pmlb_heuristic_fold_margins.csv`
 {plot_line}
+{poor_plot_line}
+
 ## Strong Practical Wins
 
 `consistent_practical_win` requires the spherical model to beat the selected
@@ -803,6 +945,19 @@ formal significance test; it is a conservative practical screen.
 ## Top Strong Cases
 
 {_md_table(strong_display)}
+
+## Strong Practical Losses
+
+The same fold screen can be read in the opposite direction:
+`consistent_practical_loss` requires the best spherical model to lose to the
+best non-spherical comparator on every fold, by at least the practical margin,
+and by more than two fold-level standard errors.
+
+{_md_table(strong_counts, floatfmt='.0f')}
+
+## Top Strong Loss Cases
+
+{_md_table(loss_display)}
 
 ## Heuristic Rules: Spherical Forests, Classification
 
@@ -819,6 +974,22 @@ formal significance test; it is a conservative practical screen.
 ## Heuristic Rules: Spherical Trees, Regression
 
 {_md_table(tree_reg_rules)}
+
+## Poor-Performance Rules: Spherical Forests, Classification
+
+{_md_table(forest_class_poor_rules)}
+
+## Poor-Performance Rules: Spherical Trees, Classification
+
+{_md_table(tree_class_poor_rules)}
+
+## Poor-Performance Rules: Spherical Forests, Regression
+
+{_md_table(forest_reg_poor_rules)}
+
+## Poor-Performance Rules: Spherical Trees, Regression
+
+{_md_table(tree_reg_poor_rules)}
 
 ## Practical Reading
 
@@ -859,6 +1030,26 @@ the forest wins.
 Avoid treating regression target magnitude as a model-selection criterion. In
 this benchmark, high and low target-value groups both had weak spherical win
 rates and no consistent practical regression wins.
+
+## Candidate Anti-Heuristic
+
+Expect spherical methods to perform poorly when one or more of the following
+hold:
+
+1. The task is regression, especially with `10 < p <= 50`; the observed margins
+   are strongly negative and target magnitude does not rescue the method.
+2. The task is classification with many predictors (`p > 50`, and especially
+   `p > 200`) relative to the number of observations. Spherical splits then
+   search centers/radii in a space where distances are noisy and local spheres
+   become hard to estimate.
+3. Predictors are mostly continuous with scale imbalance or redundancy but no
+   clear compact/radial class structure. In those cases, oblique or axis-aligned
+   splits often approximate the boundary more directly.
+4. Binary classification is strongly target-imbalanced. This benchmark had a
+   weak spherical signal for unbalanced binary tasks.
+5. Single spherical trees should be avoided more often than spherical forests:
+   the failure rates are higher because one bad center/radius choice propagates
+   down the whole tree.
 
 ## Context Summary
 
@@ -913,12 +1104,22 @@ def main() -> None:
     )
 
     rule_plot = plot_top_rules(rules)
-    report = write_report(enriched, rules, context_summary, fold_margins, rule_plot)
+    poor_rule_plot = plot_poor_rules(rules)
+    report = write_report(
+        enriched,
+        rules,
+        context_summary,
+        fold_margins,
+        rule_plot,
+        poor_rule_plot,
+    )
 
     print(f"Wrote {report}")
     print(f"Wrote {RESULTS_DIR / 'spherical_pmlb_heuristic_rules.csv'}")
     if rule_plot is not None:
         print(f"Wrote {rule_plot}")
+    if poor_rule_plot is not None:
+        print(f"Wrote {poor_rule_plot}")
 
 
 if __name__ == "__main__":
