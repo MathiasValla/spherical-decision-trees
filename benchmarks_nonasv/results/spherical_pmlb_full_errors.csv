@@ -1,0 +1,478 @@
+task,dataset,stage,model,fold,error_type,error,traceback
+classification,australian,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,auto,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,breast,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,breast_cancer_wisconsin,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,breast_w,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,buggyCrx,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,car,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,cleve,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,cleveland,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,cleveland_nominal,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,cmc,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,colic,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,contraceptive,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,credit_a,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,credit_g,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,crx,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,diabetes,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,flare,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,german,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,glass,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,heart_c,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,heart_h,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,heart_statlog,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,horse_colic,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,house_votes_84,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,hungarian,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 258, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 223, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,pima,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,prnn_fglass,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,solar_flare_1,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,solar_flare_2,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,vote,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+classification,wdbc,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+regression,1191_BNG_pbc,fit_predict,,,ManualSkip,Exceeded interactive benchmark budget even with max_samples_per_dataset=1000,
+regression,195_auto_price,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
+regression,207_autoPrice,fetch,,,ValueError,Dataset not found in PMLB.,"Traceback (most recent call last):
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 264, in run_dataset
+    X_full, y_full, X, y = _fetch_dataset(dataset, task, args)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/benchmarks_nonasv/bench_spherical_pmlb_full.py"", line 229, in _fetch_dataset
+    X, y = fetch_data(dataset, return_X_y=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 66, in fetch_data
+    dataset_url = get_dataset_url(GITHUB_URL,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File ""/Users/mathiasvalla/Desktop/Post-doc/Papiers/Sphere_trees/treeple/.venv/lib/python3.11/site-packages/pmlb/pmlb.py"", line 108, in get_dataset_url
+    raise ValueError('Dataset not found in PMLB.')
+ValueError: Dataset not found in PMLB.
+"
