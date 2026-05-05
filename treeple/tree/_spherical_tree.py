@@ -645,12 +645,18 @@ _CRITERIA_REG = {
     "absolute_error": _sk_criterion.MAE,
     "poisson": _sk_criterion.Poisson,
 }
+_CENTER_STRATEGIES = {
+    "random": 0,
+    "target": 1,
+    "hybrid": 2,
+}
 
 
 class _CythonSphericalTreeMixin:
     _parameter_constraints_extra = {
         "n_center_candidates": [_Interval(Integral, 1, None, closed="left")],
         "radius_candidates": [_Interval(Integral, 1, None, closed="left"), None],
+        "center_strategy": [_StrOptions(set(_CENTER_STRATEGIES))],
     }
 
     def _make_criterion(self, y):
@@ -686,6 +692,12 @@ class _CythonSphericalTreeMixin:
 
         criterion = self._make_criterion(y)
         radius_candidates = 0 if self.radius_candidates is None else self.radius_candidates
+        center_strategy = _CENTER_STRATEGIES[self.center_strategy]
+        n_classes = (
+            int(np.max(self.n_classes_))
+            if self._spherical_task == "classification"
+            else 1
+        )
         splitter = _BestSphericalSplitter(
             criterion,
             self.max_features_,
@@ -695,6 +707,9 @@ class _CythonSphericalTreeMixin:
             None,
             self.n_center_candidates,
             radius_candidates,
+            center_strategy,
+            self._spherical_task == "classification",
+            n_classes,
         )
 
         if self._spherical_task == "classification":
@@ -764,6 +779,7 @@ class SphericalDecisionTreeClassifier(_CythonSphericalTreeMixin, _SkDecisionTree
         min_impurity_decrease=0.0,
         n_center_candidates=16,
         radius_candidates=None,
+        center_strategy="target",
         random_state=None,
         class_weight=None,
         max_leaf_nodes=None,
@@ -787,6 +803,7 @@ class SphericalDecisionTreeClassifier(_CythonSphericalTreeMixin, _SkDecisionTree
         )
         self.n_center_candidates = n_center_candidates
         self.radius_candidates = radius_candidates
+        self.center_strategy = center_strategy
 
 
 class SphericalDecisionTreeRegressor(_CythonSphericalTreeMixin, _SkDecisionTreeRegressor):
@@ -814,6 +831,7 @@ class SphericalDecisionTreeRegressor(_CythonSphericalTreeMixin, _SkDecisionTreeR
         min_impurity_decrease=0.0,
         n_center_candidates=16,
         radius_candidates=None,
+        center_strategy="random",
         random_state=None,
         max_leaf_nodes=None,
         ccp_alpha=0.0,
@@ -835,3 +853,4 @@ class SphericalDecisionTreeRegressor(_CythonSphericalTreeMixin, _SkDecisionTreeR
         )
         self.n_center_candidates = n_center_candidates
         self.radius_candidates = radius_candidates
+        self.center_strategy = center_strategy

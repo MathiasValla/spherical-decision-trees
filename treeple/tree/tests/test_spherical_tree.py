@@ -41,6 +41,30 @@ def test_spherical_classifier_allows_single_class_bootstrap_sample():
     assert_allclose(clf.predict_proba(X), np.ones((6, 1)))
 
 
+def test_spherical_center_strategy_options_smoke():
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(80, 3))
+    y_clf = (X[:, 0] ** 2 + X[:, 1] ** 2 <= 1.0).astype(int)
+    y_reg = X[:, 0] ** 2 - X[:, 1]
+
+    for strategy in ("random", "target", "hybrid"):
+        clf = SphericalDecisionTreeClassifier(
+            max_depth=2,
+            n_center_candidates=4,
+            center_strategy=strategy,
+            random_state=0,
+        ).fit(X, y_clf)
+        reg = SphericalDecisionTreeRegressor(
+            max_depth=2,
+            n_center_candidates=4,
+            center_strategy=strategy,
+            random_state=0,
+        ).fit(X, y_reg)
+
+        assert clf.predict(X[:5]).shape == (5,)
+        assert reg.predict(X[:5]).shape == (5,)
+
+
 def test_spherical_regressor_smoke():
     X, y = make_regression(
         n_samples=80,

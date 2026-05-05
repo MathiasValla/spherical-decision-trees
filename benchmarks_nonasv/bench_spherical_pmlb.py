@@ -59,10 +59,29 @@ _patch_treeple_sklearn_compatibility()
 
 DEFAULT_CLASSIFICATION_DATASETS = ("iris", "breast_cancer", "prnn_crabs")
 DEFAULT_REGRESSION_DATASETS = ("1027_ESL", "192_vineyard")
+CENTER_STRATEGIES = ("default", "random", "target", "hybrid")
 
 
-def _classification_models(random_state, n_estimators, n_center_candidates, radius_candidates):
-    return {
+def _spherical_model_name(base_name, center_strategy, center_strategies):
+    if len(center_strategies) == 1 or center_strategy == "default":
+        return base_name
+    return f"{base_name}[{center_strategy}]"
+
+
+def _center_strategy_kwargs(center_strategy):
+    if center_strategy == "default":
+        return {}
+    return {"center_strategy": center_strategy}
+
+
+def _classification_models(
+    random_state,
+    n_estimators,
+    n_center_candidates,
+    radius_candidates,
+    center_strategies,
+):
+    models = {
         "CART": DecisionTreeClassifier(random_state=random_state),
         "RandomForest": RandomForestClassifier(
             n_estimators=n_estimators,
@@ -79,25 +98,40 @@ def _classification_models(random_state, n_estimators, n_center_candidates, radi
             random_state=random_state,
             n_jobs=1,
         ),
-        "SphericalTree": SphericalDecisionTreeClassifier(
-            random_state=random_state,
-            max_features=None,
-            n_center_candidates=n_center_candidates,
-            radius_candidates=radius_candidates,
-        ),
-        "SphericalRandomForest": SphericalRandomForestClassifier(
+    }
+    for center_strategy in center_strategies:
+        center_strategy_kwargs = _center_strategy_kwargs(center_strategy)
+        models[_spherical_model_name("SphericalTree", center_strategy, center_strategies)] = (
+            SphericalDecisionTreeClassifier(
+                random_state=random_state,
+                max_features=None,
+                n_center_candidates=n_center_candidates,
+                radius_candidates=radius_candidates,
+                **center_strategy_kwargs,
+            )
+        )
+        models[
+            _spherical_model_name("SphericalRandomForest", center_strategy, center_strategies)
+        ] = SphericalRandomForestClassifier(
             n_estimators=n_estimators,
             random_state=random_state,
             n_jobs=1,
             max_features="sqrt",
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
-        ),
-    }
+            **center_strategy_kwargs,
+        )
+    return models
 
 
-def _regression_models(random_state, n_estimators, n_center_candidates, radius_candidates):
-    return {
+def _regression_models(
+    random_state,
+    n_estimators,
+    n_center_candidates,
+    radius_candidates,
+    center_strategies,
+):
+    models = {
         "CART": DecisionTreeRegressor(random_state=random_state),
         "RandomForest": RandomForestRegressor(
             n_estimators=n_estimators,
@@ -114,21 +148,30 @@ def _regression_models(random_state, n_estimators, n_center_candidates, radius_c
             random_state=random_state,
             n_jobs=1,
         ),
-        "SphericalTree": SphericalDecisionTreeRegressor(
-            random_state=random_state,
-            max_features=None,
-            n_center_candidates=n_center_candidates,
-            radius_candidates=radius_candidates,
-        ),
-        "SphericalRandomForest": SphericalRandomForestRegressor(
+    }
+    for center_strategy in center_strategies:
+        center_strategy_kwargs = _center_strategy_kwargs(center_strategy)
+        models[_spherical_model_name("SphericalTree", center_strategy, center_strategies)] = (
+            SphericalDecisionTreeRegressor(
+                random_state=random_state,
+                max_features=None,
+                n_center_candidates=n_center_candidates,
+                radius_candidates=radius_candidates,
+                **center_strategy_kwargs,
+            )
+        )
+        models[
+            _spherical_model_name("SphericalRandomForest", center_strategy, center_strategies)
+        ] = SphericalRandomForestRegressor(
             n_estimators=n_estimators,
             random_state=random_state,
             n_jobs=1,
             max_features="sqrt",
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
-        ),
-    }
+            **center_strategy_kwargs,
+        )
+    return models
 
 
 def _pipeline(estimator):
@@ -154,6 +197,7 @@ def run_classification_dataset(dataset, args):
         args.n_estimators,
         args.n_center_candidates,
         args.radius_candidates,
+        args.center_strategies,
     )
     rows = []
 
@@ -199,6 +243,7 @@ def run_regression_dataset(dataset, args):
         args.n_estimators,
         args.n_center_candidates,
         args.radius_candidates,
+        args.center_strategies,
     )
     rows = []
 
@@ -261,6 +306,7 @@ def write_markdown_summary(summary, output_path, args):
         f"- Forest estimators: {args.n_estimators}",
         f"- Spherical center candidates per node: {args.n_center_candidates}",
         f"- Spherical radius candidates per center: {args.radius_candidates}",
+        f"- Spherical center strategies: {', '.join(args.center_strategies)}",
         "",
     ]
     for (task, dataset), frame in summary.groupby(["task", "dataset"], sort=False):
@@ -295,6 +341,12 @@ def parse_args():
     parser.add_argument("--n-estimators", type=int, default=50)
     parser.add_argument("--n-center-candidates", type=int, default=8)
     parser.add_argument("--radius-candidates", type=int, default=64)
+    parser.add_argument(
+        "--center-strategies",
+        nargs="+",
+        choices=CENTER_STRATEGIES,
+        default=("default",),
+    )
     parser.add_argument("--random-state", type=int, default=42)
     parser.add_argument(
         "--output",

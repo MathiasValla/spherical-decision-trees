@@ -51,6 +51,7 @@ class _BaseSphericalForest(BaseEstimator):
         min_impurity_decrease=0.0,
         n_center_candidates=16,
         radius_candidates=None,
+        center_strategy="hybrid",
         bootstrap=True,
         max_samples=None,
         n_jobs=None,
@@ -67,6 +68,7 @@ class _BaseSphericalForest(BaseEstimator):
         self.min_impurity_decrease = min_impurity_decrease
         self.n_center_candidates = n_center_candidates
         self.radius_candidates = radius_candidates
+        self.center_strategy = center_strategy
         self.bootstrap = bootstrap
         self.max_samples = max_samples
         self.n_jobs = n_jobs
@@ -88,6 +90,7 @@ class _BaseSphericalForest(BaseEstimator):
             min_impurity_decrease=self.min_impurity_decrease,
             n_center_candidates=self.n_center_candidates,
             radius_candidates=self.radius_candidates,
+            center_strategy=self.center_strategy,
             random_state=random_state,
         )
 
@@ -118,6 +121,7 @@ class SphericalRandomForestClassifier(ClassifierMixin, _BaseSphericalForest):
         min_impurity_decrease=0.0,
         n_center_candidates=16,
         radius_candidates=None,
+        center_strategy="hybrid",
         bootstrap=True,
         max_samples=None,
         n_jobs=None,
@@ -136,6 +140,7 @@ class SphericalRandomForestClassifier(ClassifierMixin, _BaseSphericalForest):
             min_impurity_decrease=min_impurity_decrease,
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
+            center_strategy=center_strategy,
             bootstrap=bootstrap,
             max_samples=max_samples,
             n_jobs=n_jobs,
@@ -208,6 +213,7 @@ class SphericalRandomForestRegressor(RegressorMixin, _BaseSphericalForest):
         min_impurity_decrease=0.0,
         n_center_candidates=16,
         radius_candidates=None,
+        center_strategy="random",
         bootstrap=True,
         max_samples=None,
         n_jobs=None,
@@ -225,6 +231,7 @@ class SphericalRandomForestRegressor(RegressorMixin, _BaseSphericalForest):
             min_impurity_decrease=min_impurity_decrease,
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
+            center_strategy=center_strategy,
             bootstrap=bootstrap,
             max_samples=max_samples,
             n_jobs=n_jobs,

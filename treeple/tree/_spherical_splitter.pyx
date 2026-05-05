@@ -18,6 +18,13 @@ from ._sklearn_splitter cimport sort
 
 cdef float64_t INFINITY = np.inf
 cdef float32_t FEATURE_THRESHOLD = 1e-7
+cdef intp_t CENTER_STRATEGY_RANDOM = 0
+cdef intp_t CENTER_STRATEGY_TARGET = 1
+cdef intp_t CENTER_STRATEGY_HYBRID = 2
+cdef intp_t CENTER_OVERALL = 0
+cdef intp_t CENTER_TARGET = 1
+cdef intp_t CENTER_OBSERVATION = 2
+cdef intp_t CENTER_PAIR_MIDPOINT = 3
 
 
 cdef inline void _init_split(ObliqueSplitRecord* self, intp_t start_pos) noexcept nogil:
@@ -44,6 +51,9 @@ cdef class SphericalSplitter(Splitter):
         const int8_t[:] monotonic_cst,
         intp_t n_center_candidates,
         intp_t radius_candidates,
+        intp_t center_strategy,
+        bint is_classification,
+        intp_t n_classes,
         *argv
     ):
         self.criterion = criterion
@@ -59,6 +69,9 @@ cdef class SphericalSplitter(Splitter):
 
         self.n_center_candidates = max(n_center_candidates, 1)
         self.radius_candidates = radius_candidates
+        self.center_strategy = center_strategy
+        self.is_classification = is_classification
+        self.n_classes = max(n_classes, 1)
         self.center_values = vector[vector[float32_t]](self.n_center_candidates)
         self.center_indices = vector[vector[intp_t]](self.n_center_candidates)
 
@@ -74,6 +87,9 @@ cdef class SphericalSplitter(Splitter):
                     self.monotonic_cst.base if self.monotonic_cst is not None else None,
                     self.n_center_candidates,
                     self.radius_candidates,
+                    self.center_strategy,
+                    self.is_classification,
+                    self.n_classes,
                 ), self.__getstate__())
 
     def __getstate__(self):
@@ -122,6 +138,70 @@ cdef class SphericalSplitter(Splitter):
                 return True
         return False
 
+    cdef intp_t _center_kind(self, intp_t center_i) noexcept nogil:
+        cdef intp_t target_count
+        if center_i == 0:
+            return CENTER_OVERALL
+
+        if self.center_strategy == CENTER_STRATEGY_RANDOM:
+            if center_i % 2 == 1:
+                return CENTER_OBSERVATION
+            return CENTER_PAIR_MIDPOINT
+
+        target_count = self.n_classes if self.is_classification else 2
+        if self.center_strategy == CENTER_STRATEGY_TARGET:
+            if center_i <= target_count:
+                return CENTER_TARGET
+            return CENTER_OBSERVATION
+
+        if center_i <= target_count:
+            return CENTER_TARGET
+        if (center_i - target_count) % 2 == 1:
+            return CENTER_OBSERVATION
+        return CENTER_PAIR_MIDPOINT
+
+    cdef bint _target_center_value(
+        self,
+        intp_t center_i,
+        intp_t start,
+        intp_t end,
+        const intp_t[:] samples,
+        intp_t feature,
+        float64_t y_mean,
+        float32_t* value_out
+    ) noexcept nogil:
+        cdef intp_t p
+        cdef intp_t sample_idx
+        cdef intp_t target_class = (center_i - 1) % self.n_classes
+        cdef intp_t target_side = (center_i - 1) % 2
+        cdef float64_t weighted_sum = 0.0
+        cdef float64_t weighted_total = 0.0
+        cdef float64_t weight
+        cdef bint include_sample
+
+        for p in range(start, end):
+            sample_idx = samples[p]
+            if self.is_classification:
+                include_sample = <intp_t>self.y[sample_idx, 0] == target_class
+            elif target_side == 0:
+                include_sample = self.y[sample_idx, 0] <= y_mean
+            else:
+                include_sample = self.y[sample_idx, 0] > y_mean
+
+            if include_sample:
+                if self.sample_weight is not None:
+                    weight = self.sample_weight[sample_idx]
+                else:
+                    weight = 1.0
+                weighted_sum += self.X[sample_idx, feature] * weight
+                weighted_total += weight
+
+        if weighted_total <= 0.0:
+            return False
+
+        value_out[0] = <float32_t>(weighted_sum / weighted_total)
+        return True
+
     cdef void sample_center(
         self,
         intp_t center_i,
@@ -135,9 +215,16 @@ cdef class SphericalSplitter(Splitter):
         cdef uint32_t* random_state = &self.rand_r_state
 
         cdef intp_t j, p, feat, sample_a, sample_b
+        cdef intp_t center_kind = self._center_kind(center_i)
         cdef float64_t weighted_sum
         cdef float64_t weighted_total
+        cdef float64_t weight
+        cdef float64_t y_sum = 0.0
+        cdef float64_t y_weight = 0.0
+        cdef float64_t y_mean = 0.0
         cdef float32_t value
+        cdef bint found_target_center
+        cdef bint has_target_mean = True
 
         self.center_values[center_i].clear()
         self.center_indices[center_i].clear()
@@ -154,10 +241,23 @@ cdef class SphericalSplitter(Splitter):
         sample_a = samples[start + rand_int(0, n_node_samples, random_state)]
         sample_b = samples[start + rand_int(0, n_node_samples, random_state)]
 
+        if center_kind == CENTER_TARGET and not self.is_classification:
+            for p in range(start, end):
+                if self.sample_weight is not None:
+                    weight = self.sample_weight[samples[p]]
+                else:
+                    weight = 1.0
+                y_sum += self.y[samples[p], 0] * weight
+                y_weight += weight
+            if y_weight > 0.0:
+                y_mean = y_sum / y_weight
+            else:
+                has_target_mean = False
+
         for j in range(self.center_indices[center_i].size()):
             feat = self.center_indices[center_i][j]
 
-            if center_i == 0:
+            if center_kind == CENTER_OVERALL:
                 weighted_sum = 0.0
                 weighted_total = 0.0
                 for p in range(start, end):
@@ -170,7 +270,22 @@ cdef class SphericalSplitter(Splitter):
                     value = <float32_t>(weighted_sum / weighted_total)
                 else:
                     value = <float32_t>(weighted_sum / n_node_samples)
-            elif center_i % 2 == 1:
+            elif center_kind == CENTER_TARGET:
+                if has_target_mean:
+                    found_target_center = self._target_center_value(
+                        center_i,
+                        start,
+                        end,
+                        samples,
+                        feat,
+                        y_mean,
+                        &value,
+                    )
+                else:
+                    found_target_center = False
+                if not found_target_center:
+                    value = self.X[sample_a, feat]
+            elif center_kind == CENTER_OBSERVATION:
                 value = self.X[sample_a, feat]
             else:
                 value = <float32_t>(

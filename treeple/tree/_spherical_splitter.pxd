@@ -21,6 +21,9 @@ cdef class SphericalSplitter(Splitter):
     cdef public intp_t n_center_candidates
     cdef public intp_t sphere_features
     cdef public intp_t radius_candidates
+    cdef public intp_t center_strategy
+    cdef public bint is_classification
+    cdef public intp_t n_classes
 
     cdef int node_reset(
         self,
@@ -35,6 +38,22 @@ cdef class SphericalSplitter(Splitter):
         self,
         intp_t center_i,
         intp_t feature
+    ) noexcept nogil
+
+    cdef intp_t _center_kind(
+        self,
+        intp_t center_i
+    ) noexcept nogil
+
+    cdef bint _target_center_value(
+        self,
+        intp_t center_i,
+        intp_t start,
+        intp_t end,
+        const intp_t[:] samples,
+        intp_t feature,
+        float64_t y_mean,
+        float32_t* value_out
     ) noexcept nogil
 
     cdef void sample_center(
