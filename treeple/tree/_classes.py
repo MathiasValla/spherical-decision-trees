@@ -69,6 +69,72 @@ UNSUPERVISED_SPLITTERS = {
 UNSUPERVISED_OBLIQUE_SPLITTERS = {"best": _unsup_oblique_splitter.BestObliqueUnsupervisedSplitter}
 
 
+def _empty_oblique_tree_backend(estimator, tree_cls):
+    if hasattr(estimator, "classes_"):
+        return tree_cls(
+            estimator.n_features_in_,
+            np.atleast_1d(estimator.n_classes_).astype(np.intp, copy=False),
+            estimator.n_outputs_,
+        )
+    return tree_cls(
+        estimator.n_features_in_,
+        np.array([1] * estimator.n_outputs_, dtype=np.intp),
+        estimator.n_outputs_,
+    )
+
+
+def _map_pruned_nodes_to_original(orig_tree, pruned_tree):
+    mapping = np.empty(pruned_tree.node_count, dtype=np.intp)
+    stack = [(0, 0)]
+    while stack:
+        pruned_node_id, orig_node_id = stack.pop()
+        mapping[pruned_node_id] = orig_node_id
+
+        pruned_left = int(pruned_tree.children_left[pruned_node_id])
+        if pruned_left == -1:
+            continue
+
+        orig_left = int(orig_tree.children_left[orig_node_id])
+        orig_right = int(orig_tree.children_right[orig_node_id])
+        if orig_left == -1 or orig_right == -1:
+            raise RuntimeError("Pruned tree topology is incompatible with the original tree.")
+
+        stack.append((int(pruned_tree.children_right[pruned_node_id]), orig_right))
+        stack.append((pruned_left, orig_left))
+    return mapping
+
+
+def _prune_oblique_tree(estimator):
+    check_is_fitted(estimator)
+
+    if estimator.ccp_alpha == 0.0:
+        return
+
+    plain_pruned_tree = _empty_oblique_tree_backend(estimator, _sklearn_tree.Tree)
+    _sklearn_tree._build_pruned_tree_ccp(
+        plain_pruned_tree,
+        estimator.tree_,
+        estimator.ccp_alpha,
+    )
+    node_mapping = _map_pruned_nodes_to_original(estimator.tree_, plain_pruned_tree)
+
+    plain_state = plain_pruned_tree.__getstate__()
+    oblique_state = {
+        "max_depth": plain_state["max_depth"],
+        "node_count": plain_state["node_count"],
+        "nodes": plain_state["nodes"],
+        "values": plain_state["values"],
+        "proj_vecs": np.zeros(
+            (plain_state["node_count"], estimator.n_features_in_),
+            dtype=np.float64,
+        ),
+    }
+    pruned_tree = _empty_oblique_tree_backend(estimator, ObliqueTree)
+    pruned_tree.__setstate__(oblique_state)
+    pruned_tree._copy_projection_vectors_from(estimator.tree_, node_mapping)
+    estimator.tree_ = pruned_tree
+
+
 class UnsupervisedDecisionTree(SimMatrixMixin, TransformerMixin, ClusterMixin, BaseDecisionTree):
     """Unsupervised decision tree.
 
@@ -1004,7 +1070,12 @@ class ObliqueDecisionTreeClassifier(SimMatrixMixin, DecisionTreeClassifier):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        self._prune_tree()
         return self
+
+    def _prune_tree(self):
+        """Prune an oblique tree while preserving projection vectors."""
+        _prune_oblique_tree(self)
 
     @property
     def _inheritable_fitted_attribute(self):
@@ -1469,7 +1540,12 @@ class ObliqueDecisionTreeRegressor(SimMatrixMixin, DecisionTreeRegressor):
             )
 
         builder.build(self.tree_, X, y, sample_weight, None)
+        self._prune_tree()
         return self
+
+    def _prune_tree(self):
+        """Prune an oblique tree while preserving projection vectors."""
+        _prune_oblique_tree(self)
 
     def __sklearn_tags__(self):
         # XXX: nans should be supportable in SPORF by just using RF-like splits on missing values

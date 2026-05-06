@@ -19,6 +19,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from pmlb import classification_dataset_names, fetch_data, regression_dataset_names
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from sklearn.datasets import make_gaussian_quantiles, make_moons
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, mean_squared_error, r2_score
@@ -82,6 +84,7 @@ RAW_COLUMNS = [
 ]
 
 CENTER_STRATEGIES = ("default", "random", "target", "hybrid", "radial", "target_radial")
+TOY_CLASSIFICATION_DATASETS = ("toy_moons", "toy_gaussian_quantiles", "toy_xor")
 
 
 def _parse_radius_candidates(value):
@@ -94,6 +97,126 @@ def _center_strategy_kwargs(center_strategy):
     if center_strategy == "default":
         return {}
     return {"center_strategy": center_strategy}
+
+
+class _CostComplexityPrunedTreeBase(BaseEstimator):
+    """Validation-selected cost-complexity pruning wrapper for single trees."""
+
+    _task = None
+
+    def __init__(
+        self,
+        base_estimator,
+        *,
+        validation_fraction=0.25,
+        max_alphas=5,
+        random_state=42,
+    ):
+        self.base_estimator = base_estimator
+        self.validation_fraction = validation_fraction
+        self.max_alphas = max_alphas
+        self.random_state = random_state
+
+    def _score_predictions(self, y_true, pred):
+        if self._task == "classification":
+            return balanced_accuracy_score(y_true, pred)
+        return r2_score(y_true, pred)
+
+    def _split_train_validation(self, X, y):
+        if X.shape[0] < 8 or self.validation_fraction <= 0.0:
+            return X, X, y, y, False
+
+        stratify = None
+        if self._task == "classification":
+            _, counts = np.unique(y, return_counts=True)
+            if counts.min() >= 2:
+                stratify = y
+
+        try:
+            X_train, X_val, y_train, y_val = train_test_split(
+                X,
+                y,
+                test_size=self.validation_fraction,
+                random_state=self.random_state,
+                stratify=stratify,
+            )
+        except ValueError:
+            return X, X, y, y, False
+        return X_train, X_val, y_train, y_val, True
+
+    def _candidate_alphas(self, X, y):
+        path_estimator = clone(self.base_estimator).set_params(ccp_alpha=0.0)
+        path = path_estimator.cost_complexity_pruning_path(X, y)
+        alphas = np.asarray(path.ccp_alphas, dtype=float)
+        alphas = np.unique(alphas[np.isfinite(alphas)])
+        if alphas.size == 0:
+            return np.array([0.0])
+        if alphas[0] != 0.0:
+            alphas = np.r_[0.0, alphas]
+        if self.max_alphas is not None and alphas.size > self.max_alphas:
+            chosen = np.linspace(0, alphas.size - 1, int(self.max_alphas))
+            alphas = alphas[np.unique(np.round(chosen).astype(int))]
+        return alphas
+
+    def fit(self, X, y, sample_weight=None):
+        X = np.asarray(X)
+        y = np.asarray(y)
+        X_train, X_val, y_train, y_val, has_validation = self._split_train_validation(X, y)
+        alphas = self._candidate_alphas(X_train, y_train)
+
+        if not has_validation:
+            best_alpha = float(alphas[min(1, alphas.size - 1)])
+        else:
+            best_alpha = 0.0
+            best_score = -np.inf
+            for alpha in alphas:
+                candidate = clone(self.base_estimator).set_params(ccp_alpha=float(alpha))
+                try:
+                    candidate.fit(X_train, y_train)
+                    score = self._score_predictions(y_val, candidate.predict(X_val))
+                except Exception:
+                    continue
+                if score > best_score + 1e-12 or (
+                    abs(score - best_score) <= 1e-12 and float(alpha) > best_alpha
+                ):
+                    best_score = score
+                    best_alpha = float(alpha)
+
+        self.best_ccp_alpha_ = best_alpha
+        self.estimator_ = clone(self.base_estimator).set_params(ccp_alpha=best_alpha)
+        fit_kwargs = {}
+        if sample_weight is not None:
+            fit_kwargs["sample_weight"] = sample_weight
+        self.estimator_.fit(X, y, **fit_kwargs)
+
+        self.n_features_in_ = getattr(self.estimator_, "n_features_in_", X.shape[1])
+        if self._task == "classification":
+            self.classes_ = self.estimator_.classes_
+        return self
+
+    def predict(self, X):
+        return self.estimator_.predict(X)
+
+    def predict_proba(self, X):
+        return self.estimator_.predict_proba(X)
+
+    @property
+    def feature_importances_(self):
+        return self.estimator_.feature_importances_
+
+
+class CostComplexityPrunedTreeClassifier(
+    ClassifierMixin,
+    _CostComplexityPrunedTreeBase,
+):
+    _task = "classification"
+
+
+class CostComplexityPrunedTreeRegressor(
+    RegressorMixin,
+    _CostComplexityPrunedTreeBase,
+):
+    _task = "regression"
 
 
 ERROR_COLUMNS = [
@@ -136,15 +259,13 @@ def _classification_models(
     n_center_candidates,
     radius_candidates,
     center_strategy="default",
+    prune_single_trees=False,
+    pruning_validation_fraction=0.25,
+    max_pruning_alphas=5,
 ):
     center_strategy_kwargs = _center_strategy_kwargs(center_strategy)
-    return {
+    single_trees = {
         "CART": DecisionTreeClassifier(random_state=random_state),
-        "RandomForest": RandomForestClassifier(
-            n_estimators=n_estimators,
-            random_state=random_state,
-            n_jobs=1,
-        ),
         "SphericalTree": SphericalDecisionTreeClassifier(
             random_state=random_state,
             max_features=None,
@@ -152,6 +273,27 @@ def _classification_models(
             radius_candidates=radius_candidates,
             **center_strategy_kwargs,
         ),
+        "ObliqueTree": ObliqueDecisionTreeClassifier(random_state=random_state),
+    }
+    if prune_single_trees:
+        single_trees = {
+            name: CostComplexityPrunedTreeClassifier(
+                estimator,
+                validation_fraction=pruning_validation_fraction,
+                max_alphas=max_pruning_alphas,
+                random_state=random_state,
+            )
+            for name, estimator in single_trees.items()
+        }
+
+    return {
+        "CART": single_trees["CART"],
+        "RandomForest": RandomForestClassifier(
+            n_estimators=n_estimators,
+            random_state=random_state,
+            n_jobs=1,
+        ),
+        "SphericalTree": single_trees["SphericalTree"],
         "SphericalRandomForest": SphericalRandomForestClassifier(
             n_estimators=n_estimators,
             random_state=random_state,
@@ -161,7 +303,7 @@ def _classification_models(
             radius_candidates=radius_candidates,
             **center_strategy_kwargs,
         ),
-        "ObliqueTree": ObliqueDecisionTreeClassifier(random_state=random_state),
+        "ObliqueTree": single_trees["ObliqueTree"],
         "ObliqueRandomForest": ObliqueRandomForestClassifier(
             n_estimators=n_estimators,
             random_state=random_state,
@@ -176,15 +318,13 @@ def _regression_models(
     n_center_candidates,
     radius_candidates,
     center_strategy="default",
+    prune_single_trees=False,
+    pruning_validation_fraction=0.25,
+    max_pruning_alphas=5,
 ):
     center_strategy_kwargs = _center_strategy_kwargs(center_strategy)
-    return {
+    single_trees = {
         "CART": DecisionTreeRegressor(random_state=random_state),
-        "RandomForest": RandomForestRegressor(
-            n_estimators=n_estimators,
-            random_state=random_state,
-            n_jobs=1,
-        ),
         "SphericalTree": SphericalDecisionTreeRegressor(
             random_state=random_state,
             max_features=None,
@@ -192,6 +332,27 @@ def _regression_models(
             radius_candidates=radius_candidates,
             **center_strategy_kwargs,
         ),
+        "ObliqueTree": ObliqueDecisionTreeRegressor(random_state=random_state),
+    }
+    if prune_single_trees:
+        single_trees = {
+            name: CostComplexityPrunedTreeRegressor(
+                estimator,
+                validation_fraction=pruning_validation_fraction,
+                max_alphas=max_pruning_alphas,
+                random_state=random_state,
+            )
+            for name, estimator in single_trees.items()
+        }
+
+    return {
+        "CART": single_trees["CART"],
+        "RandomForest": RandomForestRegressor(
+            n_estimators=n_estimators,
+            random_state=random_state,
+            n_jobs=1,
+        ),
+        "SphericalTree": single_trees["SphericalTree"],
         "SphericalRandomForest": SphericalRandomForestRegressor(
             n_estimators=n_estimators,
             random_state=random_state,
@@ -201,7 +362,7 @@ def _regression_models(
             radius_candidates=radius_candidates,
             **center_strategy_kwargs,
         ),
-        "ObliqueTree": ObliqueDecisionTreeRegressor(random_state=random_state),
+        "ObliqueTree": single_trees["ObliqueTree"],
         "ObliqueRandomForest": ObliqueRandomForestRegressor(
             n_estimators=n_estimators,
             random_state=random_state,
@@ -259,8 +420,33 @@ def _subsample_dataset(X, y, task, args):
     return X_sub, y_sub
 
 
+def _fetch_toy_classification_dataset(dataset):
+    feature_names = ["Feature #0", "Feature #1"]
+    if dataset == "toy_moons":
+        X, y = make_moons(n_samples=100, noise=0.13, random_state=42)
+    elif dataset == "toy_gaussian_quantiles":
+        X, y = make_gaussian_quantiles(
+            n_samples=100,
+            n_features=2,
+            n_classes=2,
+            random_state=42,
+        )
+    elif dataset == "toy_xor":
+        X = np.random.RandomState(0).uniform(low=-1.0, high=1.0, size=(200, 2))
+        y = np.logical_xor(X[:, 0] > 0.0, X[:, 1] > 0.0).astype(np.int32)
+    else:
+        raise KeyError(dataset)
+
+    frame = pd.DataFrame(X, columns=feature_names)
+    frame["class"] = y
+    return frame[feature_names].to_numpy(dtype=np.float64), frame["class"].to_numpy()
+
+
 def _fetch_dataset(dataset, task, args):
-    X, y = fetch_data(dataset, return_X_y=True)
+    if task == "classification" and dataset in TOY_CLASSIFICATION_DATASETS:
+        X, y = _fetch_toy_classification_dataset(dataset)
+    else:
+        X, y = fetch_data(dataset, return_X_y=True)
     X = np.asarray(X, dtype=np.float64)
     y = np.asarray(y)
     if task == "regression":
@@ -305,6 +491,9 @@ def run_dataset(dataset, task, args):
                     args.n_center_candidates,
                     args.radius_candidates,
                     args.center_strategy,
+                    args.prune_single_trees,
+                    args.pruning_validation_fraction,
+                    args.max_pruning_alphas,
                 )
                 if task == "classification"
                 else _regression_models(
@@ -313,6 +502,9 @@ def run_dataset(dataset, task, args):
                     args.n_center_candidates,
                     args.radius_candidates,
                     args.center_strategy,
+                    args.prune_single_trees,
+                    args.pruning_validation_fraction,
+                    args.max_pruning_alphas,
                 )
             )
             splits = (
@@ -399,6 +591,9 @@ def summarize(output_path, error_path, args):
             args.n_center_candidates,
             args.radius_candidates,
             args.center_strategy,
+            args.prune_single_trees,
+            args.pruning_validation_fraction,
+            args.max_pruning_alphas,
         )
     )
     complete = (
@@ -478,6 +673,9 @@ def write_markdown_summary(markdown_path, results, summary, model_summary, error
         f"- Spherical center candidates per node: {args.n_center_candidates}",
         f"- Spherical radius candidates per center: {args.radius_candidates}",
         f"- Spherical center strategy: {args.center_strategy}",
+        f"- Single-tree CCP pruning: {args.prune_single_trees}",
+        f"- Pruning validation fraction: {args.pruning_validation_fraction}",
+        f"- Max pruning alphas: {args.max_pruning_alphas}",
         f"- Last resume max samples per dataset: {args.max_samples_per_dataset}",
         f"- Dataset timeout: {args.dataset_timeout}",
         f"- Model timeout: {args.model_timeout}",
@@ -523,6 +721,9 @@ def parse_args():
         choices=CENTER_STRATEGIES,
         default="default",
     )
+    parser.add_argument("--prune-single-trees", action="store_true")
+    parser.add_argument("--pruning-validation-fraction", type=float, default=0.25)
+    parser.add_argument("--max-pruning-alphas", type=int, default=5)
     parser.add_argument("--max-samples-per-dataset", type=int)
     parser.add_argument("--dataset-timeout", type=int, default=0)
     parser.add_argument("--model-timeout", type=int, default=0)
@@ -530,6 +731,8 @@ def parse_args():
     parser.add_argument("--rerun-existing", action="store_true")
     parser.add_argument("--summarize-only", action="store_true")
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--no-toy-datasets", action="store_true")
+    parser.add_argument("--dataset-spec-file", type=Path)
     parser.add_argument(
         "--output",
         type=Path,
@@ -545,6 +748,17 @@ def _dataset_list(user_datasets, pmlb_datasets, max_datasets):
     return datasets
 
 
+def _tasks_from_spec_file(path):
+    spec = pd.read_csv(path)
+    if not {"task", "dataset"}.issubset(spec.columns):
+        raise ValueError("dataset spec file must have 'task' and 'dataset' columns.")
+    grouped = []
+    for task in ("classification", "regression"):
+        datasets = spec.loc[spec["task"] == task, "dataset"].astype(str).tolist()
+        grouped.append((task, datasets))
+    return grouped
+
+
 def main():
     args = parse_args()
     error_path = args.output.with_name(args.output.stem + "_errors.csv")
@@ -553,24 +767,30 @@ def main():
         return
 
     completed = set() if args.rerun_existing else _load_seen_datasets(args.output, error_path)
-    tasks = [
-        (
-            "classification",
-            _dataset_list(
-                args.classification_datasets,
-                classification_dataset_names,
-                args.max_datasets_per_task,
+    if args.dataset_spec_file is not None:
+        tasks = _tasks_from_spec_file(args.dataset_spec_file)
+    else:
+        classification_defaults = list(classification_dataset_names)
+        if not args.no_toy_datasets:
+            classification_defaults = list(TOY_CLASSIFICATION_DATASETS) + classification_defaults
+        tasks = [
+            (
+                "classification",
+                _dataset_list(
+                    args.classification_datasets,
+                    classification_defaults,
+                    args.max_datasets_per_task,
+                ),
             ),
-        ),
-        (
-            "regression",
-            _dataset_list(
-                args.regression_datasets,
-                regression_dataset_names,
-                args.max_datasets_per_task,
+            (
+                "regression",
+                _dataset_list(
+                    args.regression_datasets,
+                    regression_dataset_names,
+                    args.max_datasets_per_task,
+                ),
             ),
-        ),
-    ]
+        ]
 
     for task, datasets in tasks:
         for dataset in datasets:
