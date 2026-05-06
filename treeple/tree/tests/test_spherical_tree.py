@@ -89,6 +89,62 @@ def test_spherical_target_radial_can_sample_far_centers():
     assert np.any((split_centers < data_min) | (split_centers > data_max))
 
 
+def test_spherical_classifier_ccp_pruning_preserves_spherical_backend():
+    rng = np.random.RandomState(0)
+    X = rng.uniform(-2.0, 2.0, size=(240, 2))
+    y = (np.sum((X - np.array([0.2, -0.1])) ** 2, axis=1) <= 1.0).astype(int)
+
+    base = SphericalDecisionTreeClassifier(
+        max_features=None,
+        n_center_candidates=48,
+        center_strategy="target_radial",
+        random_state=0,
+    ).fit(X, y)
+    path = base.cost_complexity_pruning_path(X, y).ccp_alphas
+
+    pruned = None
+    for alpha in path[1:-1]:
+        candidate = SphericalDecisionTreeClassifier(
+            max_features=None,
+            n_center_candidates=48,
+            center_strategy="target_radial",
+            ccp_alpha=float(alpha),
+            random_state=0,
+        ).fit(X, y)
+        if 1 < candidate.tree_.node_count < base.tree_.node_count:
+            pruned = candidate
+            break
+
+    assert pruned is not None
+    assert type(pruned.tree_).__name__ == "SphericalTree"
+    assert pruned.tree_.get_projection_matrix().shape == (
+        pruned.tree_.node_count,
+        X.shape[1],
+    )
+    assert_allclose(
+        pruned.tree_.get_projection_matrix()[0],
+        base.tree_.get_projection_matrix()[0],
+    )
+    assert pruned.predict(X[:10]).shape == (10,)
+
+
+def test_spherical_regressor_ccp_pruning_preserves_spherical_backend():
+    rng = np.random.RandomState(1)
+    X = rng.normal(size=(180, 3))
+    y = X[:, 0] ** 2 - X[:, 1] + 0.1 * rng.normal(size=X.shape[0])
+
+    reg = SphericalDecisionTreeRegressor(
+        n_center_candidates=32,
+        center_strategy="target_radial",
+        ccp_alpha=0.01,
+        random_state=0,
+    ).fit(X, y)
+
+    assert type(reg.tree_).__name__ == "SphericalTree"
+    assert reg.tree_.get_projection_matrix().shape == (reg.tree_.node_count, X.shape[1])
+    assert reg.predict(X[:7]).shape == (7,)
+
+
 def test_spherical_regressor_smoke():
     X, y = make_regression(
         n_samples=80,

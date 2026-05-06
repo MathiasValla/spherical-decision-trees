@@ -191,6 +191,39 @@ cdef class ObliqueTree(Tree):
                 proj_vecs[i, feat] = weight
         return proj_vecs
 
+    cpdef _copy_projection_vectors_from(
+        self,
+        ObliqueTree orig_tree,
+        const intp_t[:] node_mapping
+    ):
+        """Copy sparse projection vectors from another oblique tree.
+
+        ``node_mapping[new_node_id]`` gives the corresponding node id in
+        ``orig_tree``. Projection vectors are copied only for split nodes in
+        the receiving tree; leaves are cleared.
+        """
+        cdef intp_t node_id
+        cdef intp_t orig_node_id
+
+        if node_mapping.shape[0] != self.node_count:
+            raise ValueError(
+                "node_mapping must have one entry per node in the receiving tree."
+            )
+
+        for node_id in range(self.node_count):
+            self.proj_vec_weights[node_id].clear()
+            self.proj_vec_indices[node_id].clear()
+
+            if self.nodes[node_id].left_child == -1:
+                continue
+
+            orig_node_id = node_mapping[node_id]
+            if orig_node_id < 0 or orig_node_id >= orig_tree.node_count:
+                raise ValueError("node_mapping contains an invalid original node id.")
+
+            self.proj_vec_weights[node_id] = orig_tree.proj_vec_weights[orig_node_id]
+            self.proj_vec_indices[node_id] = orig_tree.proj_vec_indices[orig_node_id]
+
     cdef int _resize_c(self, intp_t capacity=INTPTR_MAX) except -1 nogil:
         """Guts of _resize.
 

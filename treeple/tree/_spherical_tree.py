@@ -630,6 +630,8 @@ from .._lib.sklearn.tree import _criterion as _sk_criterion
 from .._lib.sklearn.tree._criterion import BaseCriterion as _BaseCriterion
 from .._lib.sklearn.tree._tree import BestFirstTreeBuilder as _BestFirstTreeBuilder
 from .._lib.sklearn.tree._tree import DepthFirstTreeBuilder as _DepthFirstTreeBuilder
+from .._lib.sklearn.tree._tree import Tree as _SkTree
+from .._lib.sklearn.tree._tree import _build_pruned_tree_ccp as _build_pruned_tree_ccp
 from ._spherical_splitter import BestSphericalSplitter as _BestSphericalSplitter
 from ._spherical_tree_backend import SphericalTree as _CythonSphericalTree
 
@@ -672,6 +674,66 @@ class _CythonSphericalTreeMixin:
     def node_count_(self):
         check_is_fitted(self, "tree_")
         return self.tree_.node_count
+
+    def _empty_tree_backend(self, tree_cls):
+        if self._spherical_task == "classification":
+            return tree_cls(
+                self.n_features_in_,
+                np.atleast_1d(self.n_classes_).astype(np.intp, copy=False),
+                self.n_outputs_,
+            )
+        return tree_cls(
+            self.n_features_in_,
+            np.array([1] * self.n_outputs_, dtype=np.intp),
+            self.n_outputs_,
+        )
+
+    def _map_pruned_nodes_to_original(self, pruned_tree):
+        mapping = np.empty(pruned_tree.node_count, dtype=np.intp)
+        stack = [(0, 0)]
+        while stack:
+            pruned_node_id, orig_node_id = stack.pop()
+            mapping[pruned_node_id] = orig_node_id
+
+            pruned_left = int(pruned_tree.children_left[pruned_node_id])
+            if pruned_left == -1:
+                continue
+
+            orig_left = int(self.tree_.children_left[orig_node_id])
+            orig_right = int(self.tree_.children_right[orig_node_id])
+            if orig_left == -1 or orig_right == -1:
+                raise RuntimeError("Pruned tree topology is incompatible with the original tree.")
+
+            stack.append((int(pruned_tree.children_right[pruned_node_id]), orig_right))
+            stack.append((pruned_left, orig_left))
+        return mapping
+
+    def _prune_tree(self):
+        """Prune a spherical tree while preserving hypersphere centers."""
+        check_is_fitted(self)
+
+        if self.ccp_alpha == 0.0:
+            return
+
+        plain_pruned_tree = self._empty_tree_backend(_SkTree)
+        _build_pruned_tree_ccp(plain_pruned_tree, self.tree_, self.ccp_alpha)
+        node_mapping = self._map_pruned_nodes_to_original(plain_pruned_tree)
+
+        plain_state = plain_pruned_tree.__getstate__()
+        spherical_state = {
+            "max_depth": plain_state["max_depth"],
+            "node_count": plain_state["node_count"],
+            "nodes": plain_state["nodes"],
+            "values": plain_state["values"],
+            "proj_vecs": np.zeros(
+                (plain_state["node_count"], self.n_features_in_),
+                dtype=np.float64,
+            ),
+        }
+        pruned_tree = self._empty_tree_backend(_CythonSphericalTree)
+        pruned_tree.__setstate__(spherical_state)
+        pruned_tree._copy_projection_vectors_from(self.tree_, node_mapping)
+        self.tree_ = pruned_tree
 
     def _build_tree(
         self,

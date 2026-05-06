@@ -47,3 +47,9 @@ cdef class ObliqueTree(Tree):
     ) noexcept nogil
 
     cpdef cnp.ndarray get_projection_matrix(self)
+
+    cpdef _copy_projection_vectors_from(
+        self,
+        ObliqueTree orig_tree,
+        const intp_t[:] node_mapping
+    )
