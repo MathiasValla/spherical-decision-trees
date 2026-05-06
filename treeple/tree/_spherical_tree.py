@@ -649,6 +649,8 @@ _CENTER_STRATEGIES = {
     "random": 0,
     "target": 1,
     "hybrid": 2,
+    "radial": 3,
+    "target_radial": 4,
 }
 
 

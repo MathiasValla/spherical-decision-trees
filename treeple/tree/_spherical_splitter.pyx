@@ -7,24 +7,31 @@
 import numpy as np
 
 from cython.operator cimport dereference as deref
+from libc.math cimport cos, log, sqrt
 from libcpp.vector cimport vector
 
 from .._lib.sklearn.tree._criterion cimport Criterion
-from .._lib.sklearn.tree._utils cimport rand_int
+from .._lib.sklearn.tree._utils cimport rand_int, rand_uniform
 from .._lib.sklearn.utils._typedefs cimport uint32_t
 from ._oblique_splitter cimport ObliqueSplitRecord
 from ._sklearn_splitter cimport sort
 
 
 cdef float64_t INFINITY = np.inf
+cdef float64_t TWO_PI = 6.283185307179586
 cdef float32_t FEATURE_THRESHOLD = 1e-7
 cdef intp_t CENTER_STRATEGY_RANDOM = 0
 cdef intp_t CENTER_STRATEGY_TARGET = 1
 cdef intp_t CENTER_STRATEGY_HYBRID = 2
+cdef intp_t CENTER_STRATEGY_RADIAL = 3
+cdef intp_t CENTER_STRATEGY_TARGET_RADIAL = 4
 cdef intp_t CENTER_OVERALL = 0
 cdef intp_t CENTER_TARGET = 1
 cdef intp_t CENTER_OBSERVATION = 2
 cdef intp_t CENTER_PAIR_MIDPOINT = 3
+cdef intp_t CENTER_LOCAL_GAUSSIAN = 4
+cdef intp_t CENTER_MEDIUM_GAUSSIAN = 5
+cdef intp_t CENTER_FAR_RADIAL = 6
 
 
 cdef inline void _init_split(ObliqueSplitRecord* self, intp_t start_pos) noexcept nogil:
@@ -140,6 +147,8 @@ cdef class SphericalSplitter(Splitter):
 
     cdef intp_t _center_kind(self, intp_t center_i) noexcept nogil:
         cdef intp_t target_count
+        cdef intp_t offset
+        cdef intp_t cycle
         if center_i == 0:
             return CENTER_OVERALL
 
@@ -148,45 +157,171 @@ cdef class SphericalSplitter(Splitter):
                 return CENTER_OBSERVATION
             return CENTER_PAIR_MIDPOINT
 
-        target_count = self.n_classes if self.is_classification else 2
+        target_count = self._target_count()
         if self.center_strategy == CENTER_STRATEGY_TARGET:
             if center_i <= target_count:
                 return CENTER_TARGET
             return CENTER_OBSERVATION
 
-        if center_i <= target_count:
+        if self.center_strategy == CENTER_STRATEGY_HYBRID:
+            if center_i <= target_count:
+                return CENTER_TARGET
+            if (center_i - target_count) % 2 == 1:
+                return CENTER_OBSERVATION
+            return CENTER_PAIR_MIDPOINT
+
+        if self.center_strategy == CENTER_STRATEGY_TARGET_RADIAL and center_i <= target_count:
             return CENTER_TARGET
-        if (center_i - target_count) % 2 == 1:
+
+        offset = center_i - 1
+        if self.center_strategy == CENTER_STRATEGY_TARGET_RADIAL:
+            offset = center_i - target_count - 1
+
+        cycle = offset % 12
+        if cycle <= 2:
+            return CENTER_LOCAL_GAUSSIAN
+        if cycle <= 4:
+            return CENTER_MEDIUM_GAUSSIAN
+        if cycle <= 8:
+            return CENTER_FAR_RADIAL
+        if cycle == 9:
             return CENTER_OBSERVATION
         return CENTER_PAIR_MIDPOINT
 
+    cdef intp_t _target_count(self) noexcept nogil:
+        if self.is_classification:
+            return self.n_classes
+        if self.center_strategy == CENTER_STRATEGY_TARGET_RADIAL:
+            return 5
+        return 2
+
+    cdef bint _uses_target_anchors(self) noexcept nogil:
+        return (
+            self.center_strategy == CENTER_STRATEGY_TARGET or
+            self.center_strategy == CENTER_STRATEGY_HYBRID or
+            self.center_strategy == CENTER_STRATEGY_TARGET_RADIAL
+        )
+
+    cdef float64_t _normal(self, uint32_t* random_state) noexcept nogil:
+        cdef float64_t u1 = rand_uniform(1e-12, 1.0, random_state)
+        cdef float64_t u2 = rand_uniform(0.0, 1.0, random_state)
+        return sqrt(-2.0 * log(u1)) * cos(TWO_PI * u2)
+
+    cdef float64_t _weighted_feature_mean(
+        self,
+        intp_t start,
+        intp_t end,
+        const intp_t[:] samples,
+        intp_t feature,
+    ) noexcept nogil:
+        cdef intp_t p
+        cdef float64_t weighted_sum = 0.0
+        cdef float64_t weighted_total = 0.0
+        cdef float64_t weight
+
+        for p in range(start, end):
+            if self.sample_weight is not None:
+                weight = self.sample_weight[samples[p]]
+                weighted_total += weight
+            else:
+                weight = 1.0
+            weighted_sum += self.X[samples[p], feature] * weight
+
+        if self.sample_weight is not None and weighted_total > 0.0:
+            return weighted_sum / weighted_total
+        return weighted_sum / (end - start)
+
+    cdef float64_t _feature_scale(
+        self,
+        intp_t start,
+        intp_t end,
+        const intp_t[:] samples,
+        intp_t feature,
+        float64_t mean,
+    ) noexcept nogil:
+        cdef intp_t p
+        cdef float64_t weighted_total = 0.0
+        cdef float64_t variance = 0.0
+        cdef float64_t weight
+        cdef float64_t diff
+
+        for p in range(start, end):
+            if self.sample_weight is not None:
+                weight = self.sample_weight[samples[p]]
+                weighted_total += weight
+            else:
+                weight = 1.0
+            diff = self.X[samples[p], feature] - mean
+            variance += weight * diff * diff
+
+        if self.sample_weight is not None and weighted_total > 0.0:
+            variance /= weighted_total
+        else:
+            variance /= (end - start)
+
+        if variance <= 1e-12:
+            return 1.0
+        return sqrt(variance)
+
+    cdef float64_t _radial_shell_multiplier(self, intp_t center_i) noexcept nogil:
+        cdef intp_t shell = center_i % 6
+        if shell == 0:
+            return 1.5
+        if shell == 1:
+            return 2.5
+        if shell == 2:
+            return 4.0
+        if shell == 3:
+            return 6.5
+        if shell == 4:
+            return 10.0
+        return 16.0
+
     cdef bint _target_center_value(
         self,
-        intp_t center_i,
+        intp_t target_id,
         intp_t start,
         intp_t end,
         const intp_t[:] samples,
         intp_t feature,
         float64_t y_mean,
+        float64_t y_std,
         float32_t* value_out
     ) noexcept nogil:
         cdef intp_t p
         cdef intp_t sample_idx
-        cdef intp_t target_class = (center_i - 1) % self.n_classes
-        cdef intp_t target_side = (center_i - 1) % 2
         cdef float64_t weighted_sum = 0.0
         cdef float64_t weighted_total = 0.0
         cdef float64_t weight
+        cdef float64_t y_value
         cdef bint include_sample
 
         for p in range(start, end):
             sample_idx = samples[p]
             if self.is_classification:
-                include_sample = <intp_t>self.y[sample_idx, 0] == target_class
-            elif target_side == 0:
-                include_sample = self.y[sample_idx, 0] <= y_mean
+                include_sample = <intp_t>self.y[sample_idx, 0] == target_id
             else:
-                include_sample = self.y[sample_idx, 0] > y_mean
+                y_value = self.y[sample_idx, 0]
+                if self._target_count() <= 2:
+                    if target_id == 0:
+                        include_sample = y_value <= y_mean
+                    else:
+                        include_sample = y_value > y_mean
+                elif y_std <= 1e-12:
+                    include_sample = True
+                elif target_id == 0:
+                    include_sample = y_value <= y_mean - y_std
+                elif target_id == 1:
+                    include_sample = y_value <= y_mean
+                elif target_id == 2:
+                    include_sample = (
+                        y_value > y_mean - 0.5 * y_std and
+                        y_value <= y_mean + 0.5 * y_std
+                    )
+                elif target_id == 3:
+                    include_sample = y_value > y_mean
+                else:
+                    include_sample = y_value >= y_mean + y_std
 
             if include_sample:
                 if self.sample_weight is not None:
@@ -216,15 +351,30 @@ cdef class SphericalSplitter(Splitter):
 
         cdef intp_t j, p, feat, sample_a, sample_b
         cdef intp_t center_kind = self._center_kind(center_i)
-        cdef float64_t weighted_sum
-        cdef float64_t weighted_total
+        cdef intp_t target_count = self._target_count()
+        cdef intp_t target_id = -1
+        cdef intp_t anchor_selector
         cdef float64_t weight
         cdef float64_t y_sum = 0.0
+        cdef float64_t y_sq_sum = 0.0
         cdef float64_t y_weight = 0.0
         cdef float64_t y_mean = 0.0
+        cdef float64_t y_std = 0.0
+        cdef float64_t y_diff
+        cdef float64_t anchor_value
+        cdef float64_t scale_value
+        cdef float64_t direction_value
+        cdef float64_t direction_norm_sq = 0.0
+        cdef float64_t scale_norm_sq = 0.0
+        cdef float64_t direction_norm = 1.0
+        cdef float64_t radial_scale = 1.0
+        cdef float64_t gaussian_scale = 1.0
         cdef float32_t value
         cdef bint found_target_center
         cdef bint has_target_mean = True
+        cdef vector[float32_t] anchors
+        cdef vector[float32_t] scales
+        cdef vector[float32_t] directions
 
         self.center_values[center_i].clear()
         self.center_indices[center_i].clear()
@@ -241,44 +391,103 @@ cdef class SphericalSplitter(Splitter):
         sample_a = samples[start + rand_int(0, n_node_samples, random_state)]
         sample_b = samples[start + rand_int(0, n_node_samples, random_state)]
 
-        if center_kind == CENTER_TARGET and not self.is_classification:
+        if self._uses_target_anchors() and not self.is_classification:
             for p in range(start, end):
                 if self.sample_weight is not None:
                     weight = self.sample_weight[samples[p]]
                 else:
                     weight = 1.0
                 y_sum += self.y[samples[p], 0] * weight
+                y_sq_sum += self.y[samples[p], 0] * self.y[samples[p], 0] * weight
                 y_weight += weight
             if y_weight > 0.0:
                 y_mean = y_sum / y_weight
+                y_diff = y_sq_sum / y_weight - y_mean * y_mean
+                if y_diff > 0.0:
+                    y_std = sqrt(y_diff)
             else:
                 has_target_mean = False
 
-        for j in range(self.center_indices[center_i].size()):
-            feat = self.center_indices[center_i][j]
+        if center_kind == CENTER_LOCAL_GAUSSIAN:
+            gaussian_scale = 0.25 if center_i % 2 == 0 else 0.5
+        elif center_kind == CENTER_MEDIUM_GAUSSIAN:
+            gaussian_scale = 1.0 if center_i % 2 == 0 else 2.0
 
-            if center_kind == CENTER_OVERALL:
-                weighted_sum = 0.0
-                weighted_total = 0.0
-                for p in range(start, end):
-                    if self.sample_weight is not None:
-                        weighted_sum += self.X[samples[p], feat] * self.sample_weight[samples[p]]
-                        weighted_total += self.sample_weight[samples[p]]
-                    else:
-                        weighted_sum += self.X[samples[p], feat]
-                if self.sample_weight is not None and weighted_total > 0.0:
-                    value = <float32_t>(weighted_sum / weighted_total)
-                else:
-                    value = <float32_t>(weighted_sum / n_node_samples)
-            elif center_kind == CENTER_TARGET:
-                if has_target_mean:
+        if (
+            self.center_strategy == CENTER_STRATEGY_TARGET_RADIAL and
+            target_count > 0 and
+            center_kind != CENTER_TARGET
+        ):
+            anchor_selector = center_i % (target_count + 1)
+            if anchor_selector > 0:
+                target_id = anchor_selector - 1
+
+        if (
+            center_kind == CENTER_LOCAL_GAUSSIAN or
+            center_kind == CENTER_MEDIUM_GAUSSIAN or
+            center_kind == CENTER_FAR_RADIAL
+        ):
+            for j in range(self.center_indices[center_i].size()):
+                feat = self.center_indices[center_i][j]
+                anchor_value = self._weighted_feature_mean(start, end, samples, feat)
+
+                if target_id >= 0 and has_target_mean:
                     found_target_center = self._target_center_value(
-                        center_i,
+                        target_id,
                         start,
                         end,
                         samples,
                         feat,
                         y_mean,
+                        y_std,
+                        &value,
+                    )
+                    if found_target_center:
+                        anchor_value = value
+
+                scale_value = self._feature_scale(start, end, samples, feat, anchor_value)
+                direction_value = self._normal(random_state)
+
+                anchors.push_back(<float32_t>anchor_value)
+                scales.push_back(<float32_t>scale_value)
+                directions.push_back(<float32_t>direction_value)
+                direction_norm_sq += direction_value * direction_value
+                scale_norm_sq += scale_value * scale_value
+
+            if direction_norm_sq > 1e-12:
+                direction_norm = sqrt(direction_norm_sq)
+            if scale_norm_sq <= 1e-12:
+                scale_norm_sq = <float64_t>self.center_indices[center_i].size()
+            radial_scale = self._radial_shell_multiplier(center_i) * sqrt(scale_norm_sq)
+
+            for j in range(self.center_indices[center_i].size()):
+                if center_kind == CENTER_FAR_RADIAL:
+                    value = <float32_t>(
+                        anchors[j] + radial_scale * directions[j] / direction_norm
+                    )
+                else:
+                    value = <float32_t>(
+                        anchors[j] + gaussian_scale * scales[j] * directions[j]
+                    )
+                self.center_values[center_i].push_back(value)
+            return
+
+        for j in range(self.center_indices[center_i].size()):
+            feat = self.center_indices[center_i][j]
+
+            if center_kind == CENTER_OVERALL:
+                value = <float32_t>self._weighted_feature_mean(start, end, samples, feat)
+            elif center_kind == CENTER_TARGET:
+                if has_target_mean:
+                    target_id = (center_i - 1) % target_count
+                    found_target_center = self._target_center_value(
+                        target_id,
+                        start,
+                        end,
+                        samples,
+                        feat,
+                        y_mean,
+                        y_std,
                         &value,
                     )
                 else:

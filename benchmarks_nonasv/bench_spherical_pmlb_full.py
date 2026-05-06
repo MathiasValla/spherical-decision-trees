@@ -80,6 +80,22 @@ RAW_COLUMNS = [
     "total_time_s",
     "random_state",
 ]
+
+CENTER_STRATEGIES = ("default", "random", "target", "hybrid", "radial", "target_radial")
+
+
+def _parse_radius_candidates(value):
+    if isinstance(value, str) and value.lower() in {"all", "none"}:
+        return None
+    return int(value)
+
+
+def _center_strategy_kwargs(center_strategy):
+    if center_strategy == "default":
+        return {}
+    return {"center_strategy": center_strategy}
+
+
 ERROR_COLUMNS = [
     "task",
     "dataset",
@@ -114,7 +130,14 @@ def time_limit(seconds):
         signal.signal(signal.SIGALRM, old_handler)
 
 
-def _classification_models(random_state, n_estimators, n_center_candidates, radius_candidates):
+def _classification_models(
+    random_state,
+    n_estimators,
+    n_center_candidates,
+    radius_candidates,
+    center_strategy="default",
+):
+    center_strategy_kwargs = _center_strategy_kwargs(center_strategy)
     return {
         "CART": DecisionTreeClassifier(random_state=random_state),
         "RandomForest": RandomForestClassifier(
@@ -127,6 +150,7 @@ def _classification_models(random_state, n_estimators, n_center_candidates, radi
             max_features=None,
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
+            **center_strategy_kwargs,
         ),
         "SphericalRandomForest": SphericalRandomForestClassifier(
             n_estimators=n_estimators,
@@ -135,6 +159,7 @@ def _classification_models(random_state, n_estimators, n_center_candidates, radi
             max_features="sqrt",
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
+            **center_strategy_kwargs,
         ),
         "ObliqueTree": ObliqueDecisionTreeClassifier(random_state=random_state),
         "ObliqueRandomForest": ObliqueRandomForestClassifier(
@@ -145,7 +170,14 @@ def _classification_models(random_state, n_estimators, n_center_candidates, radi
     }
 
 
-def _regression_models(random_state, n_estimators, n_center_candidates, radius_candidates):
+def _regression_models(
+    random_state,
+    n_estimators,
+    n_center_candidates,
+    radius_candidates,
+    center_strategy="default",
+):
+    center_strategy_kwargs = _center_strategy_kwargs(center_strategy)
     return {
         "CART": DecisionTreeRegressor(random_state=random_state),
         "RandomForest": RandomForestRegressor(
@@ -158,6 +190,7 @@ def _regression_models(random_state, n_estimators, n_center_candidates, radius_c
             max_features=None,
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
+            **center_strategy_kwargs,
         ),
         "SphericalRandomForest": SphericalRandomForestRegressor(
             n_estimators=n_estimators,
@@ -166,6 +199,7 @@ def _regression_models(random_state, n_estimators, n_center_candidates, radius_c
             max_features="sqrt",
             n_center_candidates=n_center_candidates,
             radius_candidates=radius_candidates,
+            **center_strategy_kwargs,
         ),
         "ObliqueTree": ObliqueDecisionTreeRegressor(random_state=random_state),
         "ObliqueRandomForest": ObliqueRandomForestRegressor(
@@ -270,6 +304,7 @@ def run_dataset(dataset, task, args):
                     args.n_estimators,
                     args.n_center_candidates,
                     args.radius_candidates,
+                    args.center_strategy,
                 )
                 if task == "classification"
                 else _regression_models(
@@ -277,6 +312,7 @@ def run_dataset(dataset, task, args):
                     args.n_estimators,
                     args.n_center_candidates,
                     args.radius_candidates,
+                    args.center_strategy,
                 )
             )
             splits = (
@@ -357,7 +393,13 @@ def summarize(output_path, error_path, args):
         errors.to_csv(error_path, index=False)
 
     expected_rows = args.cv * len(
-        _classification_models(0, args.n_estimators, args.n_center_candidates, args.radius_candidates)
+        _classification_models(
+            0,
+            args.n_estimators,
+            args.n_center_candidates,
+            args.radius_candidates,
+            args.center_strategy,
+        )
     )
     complete = (
         results.groupby(["task", "dataset"])["model"]
@@ -435,6 +477,7 @@ def write_markdown_summary(markdown_path, results, summary, model_summary, error
         f"- Forest estimators: {args.n_estimators}",
         f"- Spherical center candidates per node: {args.n_center_candidates}",
         f"- Spherical radius candidates per center: {args.radius_candidates}",
+        f"- Spherical center strategy: {args.center_strategy}",
         f"- Last resume max samples per dataset: {args.max_samples_per_dataset}",
         f"- Dataset timeout: {args.dataset_timeout}",
         f"- Model timeout: {args.model_timeout}",
@@ -474,7 +517,12 @@ def parse_args():
     parser.add_argument("--cv", type=int, default=3)
     parser.add_argument("--n-estimators", type=int, default=50)
     parser.add_argument("--n-center-candidates", type=int, default=8)
-    parser.add_argument("--radius-candidates", type=int, default=64)
+    parser.add_argument("--radius-candidates", type=_parse_radius_candidates, default=64)
+    parser.add_argument(
+        "--center-strategy",
+        choices=CENTER_STRATEGIES,
+        default="default",
+    )
     parser.add_argument("--max-samples-per-dataset", type=int)
     parser.add_argument("--dataset-timeout", type=int, default=0)
     parser.add_argument("--model-timeout", type=int, default=0)

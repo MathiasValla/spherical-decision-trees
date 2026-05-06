@@ -10,6 +10,7 @@ from .._lib.sklearn.utils._typedefs cimport (
     float64_t,
     int8_t,
     intp_t,
+    uint32_t,
     uint8_t,
 )
 
@@ -45,14 +46,50 @@ cdef class SphericalSplitter(Splitter):
         intp_t center_i
     ) noexcept nogil
 
+    cdef intp_t _target_count(
+        self
+    ) noexcept nogil
+
+    cdef bint _uses_target_anchors(
+        self
+    ) noexcept nogil
+
+    cdef float64_t _normal(
+        self,
+        uint32_t* random_state
+    ) noexcept nogil
+
+    cdef float64_t _weighted_feature_mean(
+        self,
+        intp_t start,
+        intp_t end,
+        const intp_t[:] samples,
+        intp_t feature,
+    ) noexcept nogil
+
+    cdef float64_t _feature_scale(
+        self,
+        intp_t start,
+        intp_t end,
+        const intp_t[:] samples,
+        intp_t feature,
+        float64_t mean,
+    ) noexcept nogil
+
+    cdef float64_t _radial_shell_multiplier(
+        self,
+        intp_t center_i
+    ) noexcept nogil
+
     cdef bint _target_center_value(
         self,
-        intp_t center_i,
+        intp_t target_id,
         intp_t start,
         intp_t end,
         const intp_t[:] samples,
         intp_t feature,
         float64_t y_mean,
+        float64_t y_std,
         float32_t* value_out
     ) noexcept nogil
 

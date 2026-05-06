@@ -47,22 +47,46 @@ def test_spherical_center_strategy_options_smoke():
     y_clf = (X[:, 0] ** 2 + X[:, 1] ** 2 <= 1.0).astype(int)
     y_reg = X[:, 0] ** 2 - X[:, 1]
 
-    for strategy in ("random", "target", "hybrid"):
+    for strategy in ("random", "target", "hybrid", "radial", "target_radial"):
         clf = SphericalDecisionTreeClassifier(
             max_depth=2,
-            n_center_candidates=4,
+            n_center_candidates=16,
+            radius_candidates=None,
             center_strategy=strategy,
             random_state=0,
         ).fit(X, y_clf)
         reg = SphericalDecisionTreeRegressor(
             max_depth=2,
-            n_center_candidates=4,
+            n_center_candidates=16,
+            radius_candidates=None,
             center_strategy=strategy,
             random_state=0,
         ).fit(X, y_reg)
 
         assert clf.predict(X[:5]).shape == (5,)
         assert reg.predict(X[:5]).shape == (5,)
+
+
+def test_spherical_target_radial_can_sample_far_centers():
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(120, 2))
+    y = (X[:, 0] + X[:, 1] > 0.0).astype(int)
+
+    clf = SphericalDecisionTreeClassifier(
+        max_depth=1,
+        max_features=None,
+        n_center_candidates=80,
+        radius_candidates=None,
+        center_strategy="target_radial",
+        random_state=0,
+    ).fit(X, y)
+
+    centers = clf.tree_.get_projection_matrix()
+    data_min = X.min(axis=0)
+    data_max = X.max(axis=0)
+    split_centers = centers[clf.tree_.children_left != -1]
+
+    assert np.any((split_centers < data_min) | (split_centers > data_max))
 
 
 def test_spherical_regressor_smoke():

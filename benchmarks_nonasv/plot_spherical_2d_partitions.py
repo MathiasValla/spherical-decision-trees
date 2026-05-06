@@ -42,8 +42,9 @@ REGIME_CSV = RESULTS_DIR / "spherical_pmlb_regime_table.csv"
 DESCRIPTORS_CSV = RESULTS_DIR / "spherical_pmlb_dataset_descriptors.csv"
 
 RANDOM_STATE = 42
-N_CENTER_CANDIDATES = 8
-RADIUS_CANDIDATES = 64
+N_CENTER_CANDIDATES = 500
+RADIUS_CANDIDATES = None
+CENTER_STRATEGY = "target_radial"
 MAX_CIRCLES = 1000
 MAX_LABELED_CIRCLES = 8
 GRID_RESOLUTION = 420
@@ -119,7 +120,7 @@ def fit_spherical_tree(X: np.ndarray, y: np.ndarray, task: str):
             max_features=None,
             n_center_candidates=N_CENTER_CANDIDATES,
             radius_candidates=RADIUS_CANDIDATES,
-            center_strategy="target",
+            center_strategy=CENTER_STRATEGY,
             random_state=RANDOM_STATE,
         )
     else:
@@ -127,7 +128,7 @@ def fit_spherical_tree(X: np.ndarray, y: np.ndarray, task: str):
             max_features=None,
             n_center_candidates=N_CENTER_CANDIDATES,
             radius_candidates=RADIUS_CANDIDATES,
-            center_strategy="random",
+            center_strategy=CENTER_STRATEGY,
             random_state=RANDOM_STATE,
         )
     model.fit(X_scaled, y)
@@ -177,14 +178,9 @@ def extract_splits(model, scaler: StandardScaler, feature_names: list[str]) -> p
     return pd.DataFrame(rows)
 
 
-def axis_limits(X_scaled: np.ndarray, splits: pd.DataFrame, centers: np.ndarray):
+def axis_limits(X_scaled: np.ndarray):
     xs = [X_scaled[:, 0]]
     ys = [X_scaled[:, 1]]
-    for row in splits.itertuples(index=False):
-        center = centers[int(row.node), :2]
-        radius = float(row.radius_standardized)
-        xs.append(np.array([center[0] - radius, center[0] + radius]))
-        ys.append(np.array([center[1] - radius, center[1] + radius]))
     x_values = np.concatenate(xs)
     y_values = np.concatenate(ys)
     x_span = x_values.max() - x_values.min()
@@ -321,6 +317,7 @@ def draw_split_circles(
                 va="bottom",
                 fontsize=8,
                 weight="bold",
+                clip_on=True,
             )
     return draw.shape[0]
 
@@ -339,7 +336,7 @@ def plot_dataset(row: pd.Series) -> dict[str, object]:
     splits.to_csv(split_path, index=False)
 
     n_internal = int(splits.shape[0])
-    xlim, ylim = axis_limits(X_scaled, splits, centers)
+    xlim, ylim = axis_limits(X_scaled)
     xx, yy, grid_points = make_grid(xlim, ylim)
 
     fig, axes = plt.subplots(1, 2, figsize=(14.6, 6.2), sharex=True, sharey=True)
@@ -495,7 +492,8 @@ def write_index(index: pd.DataFrame) -> Path:
         "continuous-looking numerical predictors. Each model is fitted with the",
         "same spherical tree hyperparameters used in the full PMLB benchmark:",
         f"`n_center_candidates={N_CENTER_CANDIDATES}`,",
-        f"`radius_candidates={RADIUS_CANDIDATES}`.",
+        f"`radius_candidates={RADIUS_CANDIDATES}`,",
+        f"`center_strategy={CENTER_STRATEGY}`.",
         "",
         "The displayed coordinates are standardized because spherical splits are",
         "distance-based and the benchmark pipeline standardizes predictors before",
@@ -504,6 +502,8 @@ def write_index(index: pd.DataFrame) -> Path:
         "Circles are the explicit split frontiers. The right-hand panel adds a",
         "light fill for the terminal leaf regions induced by those frontiers;",
         "the left-hand panel only shades the two root children for orientation.",
+        "The axes are centered on the observed data cloud, so far-field circles",
+        "may appear as low-curvature arcs clipped by the plotting window.",
         "",
         display.to_markdown(index=False),
         "",

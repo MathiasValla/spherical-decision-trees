@@ -59,7 +59,13 @@ _patch_treeple_sklearn_compatibility()
 
 DEFAULT_CLASSIFICATION_DATASETS = ("iris", "breast_cancer", "prnn_crabs")
 DEFAULT_REGRESSION_DATASETS = ("1027_ESL", "192_vineyard")
-CENTER_STRATEGIES = ("default", "random", "target", "hybrid")
+CENTER_STRATEGIES = ("default", "random", "target", "hybrid", "radial", "target_radial")
+
+
+def _parse_radius_candidates(value):
+    if isinstance(value, str) and value.lower() in {"all", "none"}:
+        return None
+    return int(value)
 
 
 def _spherical_model_name(base_name, center_strategy, center_strategies):
@@ -340,7 +346,7 @@ def parse_args():
     parser.add_argument("--cv", type=int, default=3)
     parser.add_argument("--n-estimators", type=int, default=50)
     parser.add_argument("--n-center-candidates", type=int, default=8)
-    parser.add_argument("--radius-candidates", type=int, default=64)
+    parser.add_argument("--radius-candidates", type=_parse_radius_candidates, default=64)
     parser.add_argument(
         "--center-strategies",
         nargs="+",
