@@ -1,9 +1,9 @@
-"""Generate 2D spherical split frontier plots for eligible PMLB datasets.
+"""Generate 2D spherical split frontier plots for benchmark datasets.
 
-Eligibility is intentionally strict: the benchmark dataset must have exactly two
-predictors and both must look continuous under the descriptor heuristic used in
-``analyze_spherical_heuristics.py``. The fitted model uses the same spherical
-tree hyperparameters as the full PMLB benchmark.
+Eligibility is deliberately geometric: the benchmark dataset must have exactly
+two predictors. The fitted model uses the same spherical split hyperparameters
+as the latest full PMLB benchmark, and the candidate set includes the synthetic
+two-dimensional toy classification datasets used in that benchmark.
 
 The figures keep the spherical split frontiers explicit as circles. The
 all-frontiers panel also shades the terminal regions induced by the fitted tree.
@@ -27,6 +27,7 @@ from matplotlib.patches import Circle, Patch
 import numpy as np
 import pandas as pd
 from pmlb import fetch_data
+from sklearn.datasets import make_gaussian_quantiles, make_moons
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -38,8 +39,10 @@ RESULTS_DIR = ROOT / "results"
 FIGURES_DIR = RESULTS_DIR / "figures" / "spherical_2d_partitions"
 SPLITS_DIR = RESULTS_DIR / "spherical_2d_partition_splits"
 
+BENCHMARK_CSV = (
+    RESULTS_DIR / "spherical_pmlb_target_radial_pruned_sample1000_full.csv"
+)
 REGIME_CSV = RESULTS_DIR / "spherical_pmlb_regime_table.csv"
-DESCRIPTORS_CSV = RESULTS_DIR / "spherical_pmlb_dataset_descriptors.csv"
 
 RANDOM_STATE = 42
 N_CENTER_CANDIDATES = 500
@@ -60,6 +63,8 @@ CLASS_PALETTE = [
     "#9d755d",
 ]
 
+TOY_CLASSIFICATION_DATASETS = {"toy_moons", "toy_gaussian_quantiles", "toy_xor"}
+
 
 def slugify(value: str) -> str:
     value = re.sub(r"[^A-Za-z0-9_.-]+", "_", value)
@@ -67,28 +72,41 @@ def slugify(value: str) -> str:
 
 
 def benchmark_candidates() -> pd.DataFrame:
-    regime = pd.read_csv(REGIME_CSV)
-    descriptors = pd.read_csv(DESCRIPTORS_CSV)
-    keys = regime[["task", "dataset", "n_used_samples", "n_features"]].drop_duplicates()
-    candidates = keys.merge(
-        descriptors[
-            [
-                "task",
-                "dataset",
-                "discrete_predictor_fraction",
-                "predictor_profile",
-            ]
-        ],
-        on=["task", "dataset"],
-        how="left",
-    )
-    return candidates[
-        (candidates["n_features"] == 2)
-        & (candidates["discrete_predictor_fraction"] == 0.0)
-    ].sort_values(["task", "dataset"])
+    if BENCHMARK_CSV.exists():
+        benchmark = pd.read_csv(BENCHMARK_CSV)
+        keys = benchmark[
+            ["task", "dataset", "n_used_samples", "n_features"]
+        ].drop_duplicates()
+    else:
+        keys = pd.read_csv(REGIME_CSV)[
+            ["task", "dataset", "n_used_samples", "n_features"]
+        ].drop_duplicates()
+    return keys[keys["n_features"] == 2].sort_values(["task", "dataset"])
+
+
+def fetch_toy_xy(dataset: str):
+    feature_names = ["Feature #0", "Feature #1"]
+    if dataset == "toy_moons":
+        X, y = make_moons(n_samples=100, noise=0.13, random_state=RANDOM_STATE)
+    elif dataset == "toy_gaussian_quantiles":
+        X, y = make_gaussian_quantiles(
+            n_samples=100,
+            n_features=2,
+            n_classes=2,
+            random_state=RANDOM_STATE,
+        )
+    elif dataset == "toy_xor":
+        X = np.random.RandomState(0).uniform(low=-1.0, high=1.0, size=(200, 2))
+        y = np.logical_xor(X[:, 0] > 0.0, X[:, 1] > 0.0).astype(np.int32)
+    else:
+        raise KeyError(dataset)
+    return X.astype(np.float64), np.asarray(y), feature_names
 
 
 def fetch_xy(dataset: str, task: str, n_used_samples: int):
+    if task == "classification" and dataset in TOY_CLASSIFICATION_DATASETS:
+        return fetch_toy_xy(dataset)
+
     frame = fetch_data(dataset)
     feature_names = [str(col) for col in frame.columns[:-1]]
     X = frame.iloc[:, :-1].to_numpy(dtype=np.float64)
@@ -437,7 +455,7 @@ def plot_dataset(row: pd.Series) -> dict[str, object]:
         )
     else:
         note = f"All {n_internal} circular frontiers are drawn."
-    fig.suptitle(f"{dataset}: spherical split frontiers in two continuous predictors", fontsize=14, y=0.98)
+    fig.suptitle(f"{dataset}: spherical split frontiers in two predictors", fontsize=14, y=0.98)
     fig.text(
         0.5,
         0.06,
@@ -488,8 +506,9 @@ def write_index(index: pd.DataFrame) -> Path:
     text = [
         "# Spherical 2D Partition Figures",
         "",
-        "These figures are generated for benchmark datasets with exactly two",
-        "continuous-looking numerical predictors. Each model is fitted with the",
+        "These figures are generated for complete benchmark datasets with exactly",
+        "two numerical predictors, including the synthetic toy classification",
+        "datasets. Each model is fitted with the",
         "same spherical tree hyperparameters used in the full PMLB benchmark:",
         f"`n_center_candidates={N_CENTER_CANDIDATES}`,",
         f"`radius_candidates={RADIUS_CANDIDATES}`,",
