@@ -24,11 +24,15 @@ hypersphere. The method keeps the familiar tree architecture while replacing
 some one-dimensional threshold questions by distance-to-center questions. We
 describe the construction, give a simple geometric argument showing that distant
 sphere centers recover linear splits as a local limiting case, and summarize an
-exploratory benchmark against axis-aligned and oblique trees. The results
-suggest that spherical forests can be competitive for classification problems,
-while single spherical trees and regression settings remain more fragile. We
-therefore view spherical splits not as a replacement for CART, but as a
-complementary local geometry for tree-based models.
+exploratory benchmark against axis-aligned and oblique trees. The benchmark
+suggests a clear empirical pattern: spherical random forests obtained the
+highest mean balanced accuracy among the compared forest methods on the
+classification benchmark, although this advantage does not carry over generally
+to regression or to single trees. Single spherical trees appear most useful in
+low-dimensional nonlinear settings where the signal is naturally radial,
+localized, or cluster-like. We therefore view spherical splits not as a
+replacement for CART, but as a complementary local geometry for tree-based
+models.
 \end{abstract}
 
 \section{Motivation}
@@ -45,6 +49,18 @@ classification, a class may correspond to a compact region; in regression, a
 response surface may change around a point, centroid, or prototype. An
 axis-aligned tree can approximate such a region, but it may need many cuts. A
 spherical split can isolate the same region directly.
+
+Spherical splits can also be interpretable in a way that differs from oblique
+splits. An oblique rule asks whether a weighted linear combination of covariates
+exceeds a threshold. This is flexible, but once several variables are involved
+the resulting score can be difficult to read. A spherical rule asks whether an
+observation lies within radius $r$ of a center $c$. When the covariates live in
+a meaningful metric space, this can be a natural local-neighborhood statement.
+For instance, in a classification problem with projected latitude and longitude
+as covariates, a split corresponds to a circular region around a geographical
+point. With an appropriate spatial projection or distance metric, the rule can
+be described as ``within distance $r$ of this location'' rather than as an
+abstract linear score.
 
 \section{Spherical splits}
 
@@ -67,17 +83,28 @@ Euclidean distances from the center to node samples. This preserves the usual
 finite split search structure: the geometry changes, but the recursive
 optimization problem remains a sequence of impurity comparisons.
 
-Figure~\ref{fig:geometry} shows a two-dimensional example. The learned rule at
-each internal node is a circle; the terminal regions arise from recursive
-inside/outside decisions.
+Figure~\ref{fig:axis-vs-sphere} compares the two split geometries on several
+two-dimensional examples. The learned spherical rule at each internal node is a
+circle; the terminal regions arise from recursive inside/outside decisions.
 
 \begin{figure}[t]
     \centering
-    \includegraphics[width=0.92\linewidth]{figures/geometry_iris_partition.png}
-    \caption{A two-dimensional spherical decision tree on Iris features. Each
-    circle is a learned split frontier; samples inside the circle go to one
-    child, and samples outside go to the other child.}
-    \label{fig:geometry}
+    \includegraphics[
+        width=0.98\linewidth,
+        height=0.80\textheight,
+        keepaspectratio
+    ]{figures/axis_vs_spherical_2d.png}
+    \caption{Comparison of two-dimensional decision regions learned by shallow
+    axis-aligned and spherical trees. Each row is a dataset and each column is a
+    splitting geometry. Axis-aligned trees form rectangular recursive
+    partitions, whereas spherical trees form regions by recursive inside or
+    outside decisions around learned circles. Black curves are terminal decision
+    frontiers; burgundy circles in the spherical panels are internal split
+    boundaries. The figure illustrates when spherical geometry is economical,
+    for example in localized or curved class structures, and also shows that
+    greedy induction can remain imperfect on interactions such as XOR. All
+    panels use standardized coordinates and depth-three trees for readability.}
+    \label{fig:axis-vs-sphere}
 \end{figure}
 
 \section{Two useful geometric facts}
@@ -114,9 +141,10 @@ include far-away candidates.
 
 We implemented spherical trees and spherical random forests in \texttt{treeple}
 and compared them with axis-aligned CART and random forests, as well as oblique
-trees and forests. The benchmark used complete PMLB datasets that ran without
-errors, plus simple two-dimensional toy classification datasets. Features were
-imputed and standardized. The main benchmark used three cross-validation folds,
+trees and forests. The quantitative benchmark used complete PMLB datasets that
+ran without errors; the toy datasets in Figure~\ref{fig:axis-vs-sphere} are
+used only for qualitative two-dimensional illustration. Features were imputed
+and standardized. The main benchmark used three cross-validation folds,
 50 trees for forests, 500 spherical center candidates per node, all data-induced
 radii for each candidate center, validation-selected pruning for single trees,
 and unpruned forests. Large datasets were capped at 1000 sampled observations.
@@ -151,13 +179,16 @@ characterize regimes and failure modes, not to prove dominance.
     \end{tabular}
 \end{table}
 
-The main pattern is mixed. Spherical random forests perform well on
-classification in this run, obtaining the best mean classification score in
-Table~\ref{tab:benchmark}, but at a substantial computational cost. For
-regression, ordinary and oblique random forests remain stronger. Single
-spherical trees are not competitive on average, which suggests that the
-spherical geometry is most useful when stabilized by ensembling or when the data
-contain very clear radial structure.
+The salient empirical result is the classification performance of spherical
+forests. In this exploratory benchmark, spherical random forests obtain the
+best mean classification score among the compared methods, outperforming both
+ordinary and oblique random forests, although at a much larger computational
+cost. This advantage is not observed generally for regression, where ordinary
+and oblique random forests remain stronger. Nor is it observed on average for
+single trees. The evidence therefore points to a specific use case: spherical
+split candidates can be valuable when their high-variance behavior is
+stabilized by ensembling, especially in classification problems with localized,
+radial, or cluster-like structure.
 
 Figure~\ref{fig:regime} gives a compact view of the empirical regime map. It
 should be read cautiously: the number of rows and predictors alone does not
@@ -196,29 +227,27 @@ criterion, however, may reject those cuts at the root because each individual
 axis split has little immediate impurity gain. This does not contradict the
 linear-limit argument. It shows that spherical trees inherit the myopia of
 ordinary greedy tree induction. A depth-two lookahead or delayed-gain criterion
-would be needed to systematically recover such interactions.
+would be needed to systematically recover such interactions. For single trees,
+the more favorable low-dimensional cases are nonlinear settings with compact or
+curved decision regions, such as moon-shaped classes, the PMLB banana
+classification problem, or radial Gaussian quantiles.
 
 \section{Conclusion}
 
 Spherical splits provide a simple geometric extension of recursive
 partitioning. They are most appealing when the target is expected to depend on
-membership in an area of the covariate space, especially around a center or
-prototype. They also include linear frontiers as a local limiting case when
-centers are allowed to move far from the data. Empirically, the current
-implementation is promising for classification forests but slower and less
-stable for single trees and regression.
+membership in an area of the covariate space, especially around a center,
+prototype, cluster, or spatial location. Because distant centers recover linear
+frontiers locally, the same mechanism can also approximate ordinary hyperplane
+splits. The main empirical finding is that spherical forests improved mean
+classification performance in the benchmark studied here. This improvement is
+not general for regression, and single spherical trees are competitive mainly
+in specific low-dimensional nonlinear regimes.
 
 The natural next step is a hybrid tree that chooses among axis-aligned,
 oblique, and spherical split candidates at each node, possibly with a small
 lookahead window. Such a model would keep the interpretability of recursive
 partitioning while allowing the geometry of each decision to adapt locally.
-
-\paragraph{Journal fit.}
-Among the two venues considered, \emph{Annals of Mathematics and Artificial
-Intelligence} is the better fit for the present letter because it explicitly
-targets mathematical and algorithmic methods for artificial intelligence and
-machine learning. \emph{Mathematics} is plausible, but would likely require a
-more theorem-driven treatment or a broader mathematical analysis.
 
 \begin{thebibliography}{9}
 
