@@ -1,4 +1,4 @@
-"""Build the paper's 2D axis-aligned versus spherical partition figure."""
+"""Build the paper's 2D axis-aligned, oblique, and spherical partition figure."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from treeple.tree import SphericalDecisionTreeClassifier
+from treeple.tree import ObliqueDecisionTreeClassifier, SphericalDecisionTreeClassifier
 
 
 ROOT = Path(__file__).resolve().parent
@@ -98,10 +98,10 @@ def prepare_xy(X: np.ndarray):
     return scaler.fit_transform(X)
 
 
-def make_grid(X_scaled: np.ndarray):
+def make_grid(X_scaled: np.ndarray, *, exact_bounds: bool = False):
     x_span = X_scaled[:, 0].max() - X_scaled[:, 0].min()
     y_span = X_scaled[:, 1].max() - X_scaled[:, 1].min()
-    padding = max(0.45, 0.08 * max(x_span, y_span))
+    padding = 0.0 if exact_bounds else max(0.45, 0.08 * max(x_span, y_span))
     xlim = (float(X_scaled[:, 0].min() - padding), float(X_scaled[:, 0].max() + padding))
     ylim = (float(X_scaled[:, 1].min() - padding), float(X_scaled[:, 1].max() + padding))
     xx, yy = np.meshgrid(
@@ -124,6 +124,7 @@ def fit_models(X_scaled: np.ndarray, y: np.ndarray):
         "random_state": RANDOM_STATE,
     }
     axis_model = DecisionTreeClassifier(**common)
+    oblique_model = ObliqueDecisionTreeClassifier(**common)
     sphere_model = SphericalDecisionTreeClassifier(
         **common,
         max_features=None,
@@ -132,8 +133,9 @@ def fit_models(X_scaled: np.ndarray, y: np.ndarray):
         center_strategy="target_radial",
     )
     axis_model.fit(X_scaled, y)
+    oblique_model.fit(X_scaled, y)
     sphere_model.fit(X_scaled, y)
-    return axis_model, sphere_model
+    return axis_model, oblique_model, sphere_model
 
 
 def draw_panel(ax, model, X_scaled, y, xx, yy, grid, labels, title, *, spherical=False):
@@ -200,16 +202,17 @@ def main() -> None:
     examples = load_examples()
     fig, axes = plt.subplots(
         len(examples),
-        2,
-        figsize=(7.2, 11.4),
+        3,
+        figsize=(10.2, 11.4),
         constrained_layout=False,
     )
 
     for row, (name, X, y) in enumerate(examples):
         X_scaled = prepare_xy(X)
         labels = np.unique(y)
-        axis_model, sphere_model = fit_models(X_scaled, y)
-        xlim, ylim, xx, yy, grid = make_grid(X_scaled)
+        axis_model, oblique_model, sphere_model = fit_models(X_scaled, y)
+        exact_bounds = name == "Toy XOR"
+        xlim, ylim, xx, yy, grid = make_grid(X_scaled, exact_bounds=exact_bounds)
         draw_panel(
             axes[row, 0],
             axis_model,
@@ -223,6 +226,17 @@ def main() -> None:
         )
         draw_panel(
             axes[row, 1],
+            oblique_model,
+            X_scaled,
+            y,
+            xx,
+            yy,
+            grid,
+            labels,
+            f"{name}: oblique",
+        )
+        draw_panel(
+            axes[row, 2],
             sphere_model,
             X_scaled,
             y,
@@ -257,7 +271,7 @@ def main() -> None:
         top=0.955,
         bottom=0.025,
         hspace=0.18,
-        wspace=0.10,
+        wspace=0.08,
     )
     FIGURE_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(FIGURE_PATH, dpi=220, bbox_inches="tight")

@@ -83,29 +83,31 @@ Euclidean distances from the center to node samples. This preserves the usual
 finite split search structure: the geometry changes, but the recursive
 optimization problem remains a sequence of impurity comparisons.
 
-Figure~\ref{fig:axis-vs-sphere} compares the two split geometries on several
+Figure~\ref{fig:axis-vs-sphere} compares three split geometries on several
 two-dimensional examples. The learned spherical rule at each internal node is a
 circle; the terminal regions arise from recursive inside/outside decisions.
 
-\begin{figure}[t]
+\begin{figure}[p]
     \centering
     \includegraphics[
         width=0.98\linewidth,
-        height=0.80\textheight,
+        height=0.72\textheight,
         keepaspectratio
     ]{figures/axis_vs_spherical_2d.png}
     \caption{Comparison of two-dimensional decision regions learned by shallow
-    axis-aligned and spherical trees. Each row is a dataset and each column is a
-    splitting geometry. Axis-aligned trees form rectangular recursive
-    partitions, whereas spherical trees form regions by recursive inside or
-    outside decisions around learned circles. Black curves are terminal decision
-    frontiers; burgundy circles in the spherical panels are internal split
-    boundaries. The figure illustrates when spherical geometry is economical,
-    for example in localized or curved class structures, and also shows that
-    greedy induction can remain imperfect on interactions such as XOR. All
-    panels use standardized coordinates and depth-three trees for readability.}
+    axis-aligned, oblique, and spherical trees. Each row is a dataset and each
+    column is a splitting geometry. Axis-aligned trees form rectangular
+    recursive partitions, oblique trees use linear-combination thresholds, and
+    spherical trees form regions by recursive inside or outside decisions around
+    learned circles. Black curves are terminal decision frontiers; burgundy
+    circles in the spherical panels are internal split boundaries. The figure
+    illustrates when spherical geometry is economical, for example in localized
+    or curved class structures, and also shows that greedy induction can remain
+    imperfect on interactions such as XOR. All panels use standardized
+    coordinates and depth-three trees for readability.}
     \label{fig:axis-vs-sphere}
 \end{figure}
+\clearpage
 
 \section{Two useful geometric facts}
 
