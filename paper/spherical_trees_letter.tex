@@ -1,47 +1,62 @@
-\documentclass[11pt]{article}
+\documentclass[final,5p,times,twocolumn]{elsarticle}
 
-\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 
-\title{\vspace{-1.2cm}Spherical Decision Trees: A Short Geometric Note}
-\author{Mathias Valla}
-\date{\today}
+\biboptions{numbers,sort&compress}
+\journal{Pattern Recognition Letters}
+\urlstyle{same}
+\renewcommand{\ttdefault}{cmtt}
 
 \begin{document}
-\maketitle
+
+\begin{frontmatter}
+
+\title{Spherical splits for decision trees and random forests}
+
+\author[inst1]{Mathias Valla\corref{cor1}}
+\ead{institutional.email@domain.edu}
+\cortext[cor1]{Corresponding author. Institutional e-mail address to be completed before submission.}
+
+\affiliation[inst1]{
+    organization={Affiliation to be completed before submission},
+    country={France}
+}
 
 \begin{abstract}
-Classical decision trees split the covariate space with coordinate thresholds.
-This rectangular geometry is simple and effective, but it can be inefficient
-when the response is controlled by a localized region of the feature space, for
-example observations close to a prototype, a centroid, or a compact cluster. We
-study a small modification of recursive partitioning in which a node sends
-observations left or right according to whether they fall inside or outside a
-hypersphere. The method keeps the familiar tree architecture while replacing
-some one-dimensional threshold questions by distance-to-center questions. We
-describe the construction, give a simple geometric argument showing that distant
-sphere centers recover linear splits as a local limiting case, note that
-cost-complexity pruning carries over directly, and summarize an exploratory
-benchmark against axis-aligned and oblique trees. The benchmark
-suggests a clear empirical pattern: spherical random forests obtained the
-highest mean balanced accuracy among the compared forest methods on the
-classification benchmark, although this advantage does not carry over generally
-to regression or to single trees. Single spherical trees appear most useful in
-low-dimensional nonlinear settings where the signal is naturally radial,
-localized, or cluster-like. We therefore view spherical splits not as a
-replacement for CART, but as a complementary local geometry for tree-based
-models.
+Classical decision trees recursively split the covariate space with coordinate
+thresholds. This rectangular geometry is simple and effective, but it can be
+inefficient when a label or response is controlled by membership in a localized
+region of feature space. We study a small modification of tree induction in
+which a node sends observations left or right according to whether they fall
+inside or outside a learned hypersphere. The rule keeps the usual recursive
+tree architecture while replacing some threshold questions by
+distance-to-center questions. We describe the split search, show that distant
+sphere centers recover linear frontiers as a local limiting case, and note that
+CART cost-complexity pruning applies without changing the pruning criterion.
+Exploratory benchmarks on complete PMLB datasets compare axis-aligned, oblique,
+and spherical trees and forests. Spherical random forests obtain the best mean
+balanced accuracy among the forest methods in classification, while ordinary
+and oblique forests remain stronger in regression and single spherical trees
+help mainly in low-dimensional nonlinear cases. Spherical splits are therefore
+best viewed as a complementary local geometry for interpretable tree-based
+pattern recognition.
 \end{abstract}
 
-\section{Motivation}
+\begin{keyword}
+decision trees \sep random forests \sep spherical splits \sep recursive partitioning \sep pattern recognition
+\end{keyword}
 
-Decision trees are attractive because they are nonparametric, interpretable, and
-easy to ensemble. Their usual form, however, is tied to a strong geometric
-choice. At each internal node, CART-style trees select a feature index $j$ and a
-threshold $a$, then split observations according to $x_j \le a$ or $x_j>a$
+\end{frontmatter}
+
+\section{Introduction}
+
+Decision trees are attractive because they are nonparametric, interpretable,
+and easy to ensemble. Their usual form, however, fixes a strong geometry. At
+each internal node, CART-style trees select a feature index $j$ and a threshold
+$a$, then split observations according to $x_j \le a$ or $x_j>a$
 \cite{breiman1984cart}. Recursively, this produces rectangular cells.
 
 Rectangular cells are natural when the signal is sparse and coordinate-aligned.
@@ -51,19 +66,18 @@ response surface may change around a point, centroid, or prototype. An
 axis-aligned tree can approximate such a region, but it may need many cuts. A
 spherical split can isolate the same region directly.
 
-Spherical splits can also be interpretable in a way that differs from oblique
-splits. An oblique rule asks whether a weighted linear combination of covariates
-exceeds a threshold. This is flexible, but once several variables are involved
-the resulting score can be difficult to read. A spherical rule asks whether an
-observation lies within radius $r$ of a center $c$. When the covariates live in
-a meaningful metric space, this can be a natural local-neighborhood statement.
-For instance, in a classification problem with projected latitude and longitude
-as covariates, a split corresponds to a circular region around a geographical
-point. With an appropriate spatial projection or distance metric, the rule can
-be described as ``within distance $r$ of this location'' rather than as an
-abstract linear score.
+This geometry is also different from oblique splitting. An oblique rule asks
+whether a weighted linear combination of covariates exceeds a threshold
+\cite{murthy1994oc1}. This is flexible, but once several variables are involved
+the resulting score can be difficult to interpret. A spherical rule asks
+whether an observation lies within radius $r$ of a center $c$. When the active
+covariates define a meaningful metric space, this can be a natural
+local-neighborhood statement. For instance, with projected latitude and
+longitude, a split describes membership in a circular region around a
+geographical point. This interpretation depends on scaling and on the chosen
+metric, but it can be more direct than an abstract linear score.
 
-\section{Spherical splits}
+\section{Spherical splitting rules}
 
 Let $S\subseteq\{1,\ldots,p\}$ be the set of features used at a node. A
 spherical split is defined by a center $c\in\mathbb{R}^{|S|}$ and a radius
@@ -72,9 +86,9 @@ $r\ge 0$:
     \|x_S-c\|_2^2 \le r^2.
 \]
 Observations satisfying this inequality are sent to one child and the remaining
-observations to the other child. The pair $(c,r)$ is selected to maximize the
-same impurity decrease used in ordinary tree induction, such as Gini decrease
-for classification or variance reduction for regression.
+observations to the other. The pair $(c,r)$ is selected to maximize the same
+impurity decrease used in ordinary tree induction, such as Gini decrease for
+classification or variance reduction for regression.
 
 In the implementation studied here, candidate centers are generated from a
 finite mixture of rules: global centers, target-conditional centers, observed
@@ -84,39 +98,34 @@ Euclidean distances from the center to node samples. This preserves the usual
 finite split search structure: the geometry changes, but the recursive
 optimization problem remains a sequence of impurity comparisons.
 
-Figure~\ref{fig:axis-vs-sphere} compares three split geometries on several
+Figure~\ref{fig:axis-vs-sphere} compares three split geometries on
 two-dimensional examples. The learned spherical rule at each internal node is a
-circle; the terminal regions arise from recursive inside/outside decisions.
+circle; terminal regions arise from recursive inside/outside decisions.
 
-\begin{figure}[p]
+\begin{figure*}[t]
     \centering
     \includegraphics[
-        width=0.98\linewidth,
-        height=0.72\textheight,
+        width=0.98\textwidth,
+        height=0.66\textheight,
         keepaspectratio
-    ]{figures/axis_vs_spherical_2d.png}
-    \caption{Comparison of two-dimensional decision regions learned by shallow
+    ]{Figure_1_axis_oblique_spherical.png}
+    \caption{Two-dimensional decision regions learned by shallow
     axis-aligned, oblique, and spherical trees. Each row is a dataset and each
-    column is a splitting geometry. Axis-aligned trees form rectangular
-    recursive partitions, oblique trees use linear-combination thresholds, and
-    spherical trees form regions by recursive inside or outside decisions around
-    learned circles. Black curves are terminal decision frontiers; burgundy
-    circles in the spherical panels are internal split boundaries. The figure
-    illustrates when spherical geometry is economical, for example in localized
-    or curved class structures, and also shows that greedy induction can remain
-    imperfect on interactions such as XOR. All panels use standardized
-    coordinates and depth-three trees for readability.}
+    column is a splitting geometry. Black curves are terminal decision
+    frontiers; burgundy circles in the spherical panels are internal split
+    boundaries. The panels illustrate when spherical geometry is economical,
+    for example in localized or curved class structures, and show that greedy
+    induction can still be imperfect on interactions such as XOR.}
     \label{fig:axis-vs-sphere}
-\end{figure}
-\clearpage
+\end{figure*}
 
-\section{Geometric and structural properties}
+\section{Geometry, pruning, and computation}
 
-A first useful case is local radial structure. If the target changes when
+A first useful case is radial or local structure. If the target changes when
 $x$ enters a ball around $c$, then a single spherical split can represent that
-event. A rectangular tree, by contrast, must approximate the ball by many
-coordinate cuts. This is an approximation-economy argument rather than a claim
-that spherical trees are universally more expressive.
+event. A rectangular tree must approximate the ball by coordinate cuts. This is
+an approximation-economy argument rather than a claim that spherical trees are
+universally more expressive.
 
 A second useful case is the limiting connection to linear splits. Let
 $u\in\mathbb{R}^p$ satisfy $\|u\|_2=1$, let $R>0$, set $c=Ru$, and choose
@@ -138,36 +147,18 @@ $B^2/(2R)$. Thus the spherical split converges locally to the halfspace
 $u^\top x\ge t$ as the center is moved far away. Axis-aligned splits are
 recovered by taking $u$ equal to a coordinate vector. In finite samples this is
 only a local approximation, but it motivates center-generation schemes that
-include far-away candidates.
+include distant candidates.
 
-There is also a useful structural description of the induced partition. A leaf
-at depth $d$ is reached by a sequence of inside/outside decisions. Therefore
-its cell can be written as an intersection of at most $d$ sets, each of which is
-either a ball
-\[
-    \{x:\|x_S-c\|_2^2\le r^2\}
-\]
-or the complement of such a ball. Thus spherical-tree leaves are
-semi-algebraic cells defined by quadratic inequalities. In two dimensions their
-boundaries are made of circular arcs; in higher dimensions they are made of
-hyperspherical patches. This differs from axis-aligned trees, whose leaves are
-rectangular boxes, and from oblique trees, whose leaves are polyhedral cells.
-It also gives a simple way to express regions such as annuli or shells: combine
-an outside decision for a smaller sphere with an inside decision for a larger
-one.
+The induced cells also have a simple algebraic form. A leaf at depth $d$ is an
+intersection of at most $d$ sets, each of which is either a ball or the
+complement of a ball. Spherical-tree leaves are therefore semi-algebraic cells
+defined by quadratic inequalities. In two dimensions their boundaries are made
+of circular arcs; in higher dimensions they are made of hyperspherical patches.
+This contrasts with axis-aligned boxes and oblique polyhedra, and it gives a
+compact way to express annuli or shells by combining outside and inside sphere
+decisions.
 
-This gives an exact representation result for simple radial step functions. If
-\[
-    f(x)=\sum_{\ell=1}^K a_\ell
-    \mathbf{1}\{\rho_{\ell-1}<\|x-c\|_2\le \rho_\ell\},
-\]
-with $0=\rho_0<\rho_1<\cdots<\rho_K$, then a chain of spherical splits centered
-at $c$ can recover the nested balls or annuli defining the pieces of $f$.
-Axis-aligned and oblique trees can approximate these regions, but their
-rectangular or polyhedral leaves generally require many more terminal cells to
-trace curved boundaries.
-
-One can also view a spherical split as a restricted quadratic rule:
+The split can also be read as a restricted quadratic rule:
 \[
     \|x-c\|_2^2\le r^2
     \quad\Longleftrightarrow\quad
@@ -177,18 +168,7 @@ Equivalently, it is an oblique split in the lifted representation
 $z(x)=(x,\|x\|_2^2)$, with the coefficient of $\|x\|_2^2$ fixed to be positive.
 This places spherical trees between oblique trees and general quadratic trees:
 they add isotropic curvature without introducing the full parameter count, and
-loss of interpretability, of arbitrary quadratic forms. The same rule can be
-read as thresholding distance from a prototype, or equivalently thresholding a
-radial-basis similarity to $c$.
-
-The split class has the Euclidean equivariances one would expect from a
-distance-based rule. If the active covariates are translated, uniformly scaled,
-or rotated by an orthogonal map, a spherical split remains a spherical split
-after transforming its center and radius accordingly. This property is one
-reason feature scaling matters in practice: a sphere is interpretable only
-relative to the metric placed on the covariate space.
-
-\section{Pruning and computational aspects}
+loss of interpretability, of arbitrary quadratic forms.
 
 Cost-complexity pruning adapts directly. CART pruning selects subtrees by
 minimizing
@@ -197,49 +177,40 @@ minimizing
 \]
 where $R(T)$ is the empirical leaf risk and $|\widetilde{T}|$ is the number of
 terminal nodes \cite{breiman1984cart}. Once a spherical tree has been grown,
-this criterion depends only on the tree topology, leaf predictions, leaf risks,
-and leaf count. It does not depend on whether internal nodes were created by
-coordinate, oblique, or spherical split rules. The usual weakest-link pruning
-sequence and validation choice of $\alpha$ can therefore be used without
-changing the statistical pruning criterion. The implementation only has to
-preserve the centers and radii attached to the internal nodes that survive
-pruning.
+this criterion depends only on topology, leaf predictions, leaf risks, and leaf
+count. It does not depend on whether internal nodes were created by coordinate,
+oblique, or spherical rules. The usual weakest-link pruning sequence and
+validation choice of $\alpha$ can therefore be used without changing the
+statistical pruning criterion.
 
-The current implementation should be read as a research prototype rather than
-as an optimized solver. At a node with $n_m$ samples, $s$ active features, and
-$C$ candidate centers, the basic distance computation costs $O(C n_m s)$. If
-all data-induced radii are considered, each center then requires evaluating the
-ordered distances, which can add $O(C n_m\log n_m)$ work. These costs explain
-the slower fits observed below, but they are not a theoretical lower bound for
-the model class. Several optimizations are natural and orthogonal to the
-statistical question studied here. For example,
-\[
-    \|x-c\|_2^2 = \|x\|_2^2 - 2x^\top c + \|c\|_2^2,
-\]
-so squared norms can be reused and many candidate centers can be evaluated by
-matrix multiplication. Candidate centers are independent at a node and can be
-parallelized; sorted distances allow cumulative impurity updates for all exact
-data-induced radii; approximate variants could replace all radii by quantiles
-or histograms; and forest-level parallelism is immediate. Such engineering is
-outside the scope of this note, but it is important for making spherical
-forests practically competitive.
+The current implementation is a research prototype rather than an optimized
+solver. At a node with $n_m$ samples, $s$ active features, and $C$ candidate
+centers, the basic distance computation costs $O(C n_m s)$. If all
+data-induced radii are considered, sorting the distances for each center adds
+$O(C n_m\log n_m)$ work, after which cumulative impurity updates scan the
+ordered candidates. These costs explain slower fits, but they are not a lower
+bound for the model class. Squared norms can be reused in
+$\|x-c\|_2^2=\|x\|_2^2-2x^\top c+\|c\|_2^2$; many centers can be evaluated by
+matrix multiplication; center evaluations are parallel at a node; approximate
+variants can use quantiles or histograms; and forests add another level of
+parallelism.
 
-\section{Exploratory benchmark}
+\section{Experiments}
 
-We implemented spherical trees and spherical random forests in \texttt{treeple}
-and compared them with axis-aligned CART and random forests, as well as oblique
-trees and forests. The quantitative benchmark used complete PMLB datasets that
-ran without errors; the toy datasets in Figure~\ref{fig:axis-vs-sphere} are
-used only for qualitative two-dimensional illustration. Features were imputed
-and standardized. The main benchmark used three cross-validation folds,
-50 trees for forests, 500 spherical center candidates per node, all data-induced
-radii for each candidate center, validation-selected pruning for single trees,
-and unpruned forests. Large datasets were capped at 1000 sampled observations.
-The final comparison contained 249 complete datasets and 38 skipped datasets
-or fetch/model errors. The comparison is descriptive: it is intended to
-characterize regimes and failure modes, not to prove dominance.
+We implemented spherical trees and spherical random forests in
+\texttt{treeple}. We compared them with axis-aligned CART and random forests,
+as well as oblique trees and forests. The quantitative benchmark used complete
+PMLB datasets that ran without errors \cite{olson2017pmlb}; the toy datasets
+in Figure~\ref{fig:axis-vs-sphere} are qualitative illustrations only. Features
+were imputed and standardized. The benchmark used three cross-validation folds,
+50 trees for forests, 500 spherical center candidates per node, all
+data-induced radii for each candidate center, validation-selected pruning for
+single trees, and unpruned forests. Large datasets were capped at 1000 sampled
+observations. The final comparison contained 249 complete datasets and 38
+skipped datasets or fetch/model errors. The comparison is descriptive: it is
+intended to characterize regimes and failure modes, not to prove dominance.
 
-\begin{table}[t]
+\begin{table*}[t]
     \centering
     \caption{Mean benchmark performance and fit time over complete datasets.
     Primary score is balanced accuracy for classification and $R^2$ for
@@ -264,47 +235,50 @@ characterize regimes and failure modes, not to prove dominance.
         Regression & Spherical tree & 117 & 0.262 & 7.516\\
         \bottomrule
     \end{tabular}
-\end{table}
+\end{table*}
 
 The salient empirical result is the classification performance of spherical
 forests. In this exploratory benchmark, spherical random forests obtain the
 best mean classification score among the compared methods, outperforming both
-ordinary and oblique random forests, although at a much larger computational
+ordinary and oblique random forests, although at much larger computational
 cost. This advantage is not observed generally for regression, where ordinary
 and oblique random forests remain stronger. Nor is it observed on average for
 single trees. The evidence therefore points to a specific use case: spherical
 split candidates can be valuable when their high-variance behavior is
 stabilized by ensembling, especially in classification problems with localized,
-radial, or cluster-like structure.
+radial, or cluster-like structure. Dataset-level paired tests and larger
+computational studies are left for future work.
 
-Figure~\ref{fig:regime} gives a compact view of the empirical regime map. It
-should be read cautiously: the number of rows and predictors alone does not
-fully determine when spherical splits help. The missing variable is likely
-geometric: whether the target depends on local neighborhoods, clusters, or
-distance-to-prototype effects.
-
-\begin{figure}[t]
+\begin{figure*}[t]
     \centering
-    \includegraphics[width=0.92\linewidth]{figures/benchmark_regime_forests.png}
+    \includegraphics[
+        width=0.80\textwidth,
+        height=0.26\textheight,
+        keepaspectratio
+    ]{Figure_2_forest_regime.png}
     \caption{Winning forest model across benchmark datasets as a function of
     sample size and feature count. The pattern is exploratory and does not
     provide a deterministic rule, but it suggests that spherical forests are a
     useful complement in some classification regimes.}
     \label{fig:regime}
-\end{figure}
+\end{figure*}
 
-\section{Limitations}
+Figure~\ref{fig:regime} gives a compact empirical regime map. It should be read
+cautiously: the number of rows and predictors alone does not fully determine
+when spherical splits help. The missing variable is likely geometric: whether
+the target depends on local neighborhoods, clusters, or distance-to-prototype
+effects.
 
-The computational opportunities above do not remove the main practical
-limitation of the present implementation: spherical split search is still much
-more expensive than scanning coordinate thresholds. This matters especially in
-forests, where the cost is repeated across many trees and many internal nodes.
+\section{Discussion and limitations}
 
-The method also depends on the metric. In our experiments, predictors were
-standardized before fitting. Without scaling, a spherical split is dominated by
-high-variance coordinates. In high-dimensional spaces, Euclidean distances can
-become less informative, and far-away centers may make splits nearly linear
-without solving the underlying greedy-search problem.
+Spherical split search is much more expensive than scanning coordinate
+thresholds. This matters especially in forests, where the cost is repeated
+across many trees and internal nodes. The method also depends on the metric. In
+our experiments, predictors were standardized before fitting. Without scaling,
+a spherical split is dominated by high-variance coordinates. In high-dimensional
+spaces, Euclidean distances can become less informative, and far-away centers
+may make splits nearly linear without solving the underlying greedy-search
+problem.
 
 The XOR example is instructive. In principle, two far-away circles can locally
 approximate the two axis-aligned cuts needed for XOR. A greedy impurity
@@ -319,20 +293,46 @@ classification problem, or radial Gaussian quantiles.
 
 \section{Conclusion}
 
-Spherical splits provide a simple geometric extension of recursive
-partitioning. They are most appealing when the target is expected to depend on
-membership in an area of the covariate space, especially around a center,
-prototype, cluster, or spatial location. Because distant centers recover linear
-frontiers locally, the same mechanism can also approximate ordinary hyperplane
-splits. The main empirical finding is that spherical forests improved mean
-classification performance in the benchmark studied here. This improvement is
-not general for regression, and single spherical trees are competitive mainly
-in specific low-dimensional nonlinear regimes.
+Spherical splits provide a simple geometric extension of recursive partitioning.
+They are most appealing when the target is expected to depend on membership in
+an area of the covariate space, especially around a center, prototype, cluster,
+or spatial location. Because distant centers recover linear frontiers locally,
+the same mechanism can also approximate hyperplane splits. The main empirical
+finding is that spherical forests improved mean classification performance in
+the benchmark studied here. This improvement is not general for regression, and
+single spherical trees are competitive mainly in specific low-dimensional
+nonlinear regimes.
 
-The natural next step is a hybrid tree that chooses among axis-aligned,
-oblique, and spherical split candidates at each node, possibly with a small
-lookahead window. Such a model would keep the interpretability of recursive
-partitioning while allowing the geometry of each decision to adapt locally.
+The natural next step is a hybrid tree that chooses among axis-aligned, oblique,
+and spherical split candidates at each node, possibly with a small lookahead
+window. Such a model would keep the interpretability of recursive partitioning
+while allowing the geometry of each decision to adapt locally.
+
+\section*{Data and software availability}
+
+The PMLB datasets used in the experiments are publicly available
+\cite{olson2017pmlb}. An open-source implementation of spherical trees,
+together with scripts for reproducing the results presented in this paper, is
+available in the \texttt{treeple} package at
+\url{https://github.com/neurodata/treeple}.
+
+\section*{Declaration of competing interest}
+
+The author declares no known competing financial interests or personal
+relationships that could have appeared to influence the work reported in this
+paper.
+
+\section*{Funding}
+
+This research did not receive any specific grant from funding agencies in the
+public, commercial, or not-for-profit sectors.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+
+During the preparation of this work the author used OpenAI's Codex and ChatGPT
+to assist with language editing, formatting, code development, and document
+iteration. The author reviewed and edited the content as needed and takes full
+responsibility for the content of the published article.
 
 \begin{thebibliography}{9}
 
@@ -361,6 +361,11 @@ comparison.
 Pedregosa, F. et al.
 \newblock Scikit-learn: machine learning in Python.
 \newblock \emph{Journal of Machine Learning Research}, 12:2825--2830, 2011.
+
+\bibitem{treeple2026}
+NeuroData.
+\newblock \texttt{treeple}: tree-based estimators for Python.
+\newblock \url{https://github.com/neurodata/treeple}, 2026.
 
 \end{thebibliography}
 
