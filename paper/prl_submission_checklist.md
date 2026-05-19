@@ -12,15 +12,21 @@ Elsevier LaTeX instructions.
 - Abstract: 177 words, below the current 250-word guide limit and the older
   PRL 200-word formatting note.
 - Keywords: 5 keywords, within the required 1 to 7 range.
-- Highlights: `highlights.txt` contains 5 highlights; each is under 85
-  characters.
-- Graphical abstract: `Graphical_Abstract.png` is 1328 x 531 pixels.
+- Highlights: `highlights.txt` contains 5 bullet highlights; each is under 85
+  characters, including spaces.
+- Graphical abstract: `graphical_abstract.pdf` and `graphical_abstract.tiff`
+  are separate submission assets, with a `Graphical_Abstract.png` preview.
+  The generated bitmap is 1328 x 531 pixels (width x height), satisfying
+  Elsevier's 531 x 1328 pixel minimum (height x width) by matching that aspect
+  ratio.
 - Artwork/source layout: submission-facing figures are copied to the top level
   of `paper/`, matching Elsevier's instruction to avoid subfolders in LaTeX
   source uploads.
 - Data/code: the manuscript states that PMLB data are public and that the
   open-source `treeple` implementation and reproduction scripts are available
-  at https://github.com/MathiasValla/spherical-decision-trees.
+  at https://github.com/MathiasValla/spherical-decision-trees, with
+  `REPRODUCING_RESULTS.md` documenting how to retrieve or regenerate all
+  article results.
 - Declarations: data/code availability, competing interest, funding,
   acknowledgments, and generative-AI-use declarations are included before the
   references.

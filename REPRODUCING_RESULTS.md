@@ -23,6 +23,7 @@ Repository: <https://github.com/MathiasValla/spherical-decision-trees>
 - Figure 2:
   `paper/Figure_2_score_time_tradeoff.png`
 - Graphical abstract:
+  `paper/graphical_abstract.pdf`, `paper/graphical_abstract.tiff`, and
   `paper/Graphical_Abstract.png`
 
 If you only need to retrieve the reported results, clone the repository and use
@@ -114,6 +115,10 @@ The graphical abstract can be regenerated with:
 ```bash
 .venv/bin/python paper/make_prl_graphical_abstract.py
 ```
+
+This writes a PDF and TIFF submission asset, plus a PNG preview, at 1328 by 531
+pixels (width by height). The aspect ratio satisfies Elsevier's graphical
+abstract minimum of 531 by 1328 pixels (height by width) or proportionally more.
 
 The manuscript PDF can then be rebuilt from the `paper` directory:
 

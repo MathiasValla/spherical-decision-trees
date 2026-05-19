@@ -1,10 +1,15 @@
-"""Create a PRL graphical abstract for the spherical trees manuscript."""
+"""Create graphical abstract assets for the spherical trees manuscript."""
 
 from __future__ import annotations
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
+
+
+PNG_PATH = "paper/Graphical_Abstract.png"
+PDF_PATH = "paper/graphical_abstract.pdf"
+TIFF_PATH = "paper/graphical_abstract.tiff"
 
 
 def _toy_points(seed: int = 3):
@@ -90,7 +95,9 @@ def main() -> None:
         fontsize=12,
     )
     fig.tight_layout(rect=(0.02, 0.08, 0.98, 0.92), w_pad=2.0)
-    fig.savefig("paper/Graphical_Abstract.png", dpi=100)
+    fig.savefig(PNG_PATH, dpi=100)
+    fig.savefig(PDF_PATH)
+    fig.savefig(TIFF_PATH, dpi=300, pil_kwargs={"compression": "tiff_lzw"})
 
 
 if __name__ == "__main__":

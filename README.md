@@ -19,7 +19,7 @@ This fork contains the spherical decision tree and spherical random forest
 prototype used in the article "Spherical splits for decision trees and random
 forests." The article source, figures, benchmark outputs, and reproduction
 instructions are available in
-[`SPHERICAL_TREES_REPRODUCING_RESULTS.md`](SPHERICAL_TREES_REPRODUCING_RESULTS.md).
+[`REPRODUCING_RESULTS.md`](REPRODUCING_RESULTS.md).
 
 Repository: <https://github.com/MathiasValla/spherical-decision-trees>
 
