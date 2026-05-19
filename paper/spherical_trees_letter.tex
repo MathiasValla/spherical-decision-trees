@@ -17,11 +17,12 @@
 \title{Spherical splits for decision trees and random forests}
 
 \author[inst1]{Mathias Valla\corref{cor1}}
-\ead{institutional.email@domain.edu}
-\cortext[cor1]{Corresponding author. Institutional e-mail address to be completed before submission.}
+\ead{mathias.valla@gmail.com}
+\cortext[cor1]{Corresponding author.}
 
 \affiliation[inst1]{
-    organization={Affiliation to be completed before submission},
+    organization={Chaire DIALog, Institut Louis Bachelier},
+    city={Paris},
     country={France}
 }
 
@@ -128,7 +129,8 @@ an approximation-economy argument rather than a claim that spherical trees are
 universally more expressive.
 
 A second useful case is the limiting connection to linear splits. Let
-$u\in\mathbb{R}^p$ satisfy $\|u\|_2=1$, let $R>0$, set $c=Ru$, and choose
+$u\in\mathbb{R}^p$ satisfy $\|u\|_2=1$, fix $t\in\mathbb{R}$, let $R$ be large
+enough that $R^2-2Rt\ge 0$, set $c=Ru$, and choose
 \[
     r_R^2 = R^2 - 2Rt.
 \]
@@ -198,7 +200,9 @@ parallelism.
 \section{Experiments}
 
 We implemented spherical trees and spherical random forests in
-\texttt{treeple}. We compared them with axis-aligned CART and random forests,
+\texttt{treeple}. The code and scripts used to reproduce the results are
+available at \url{https://github.com/MathiasValla/spherical-decision-trees}.
+We compared the spherical estimators with axis-aligned CART and random forests,
 as well as oblique trees and forests. The quantitative benchmark used complete
 PMLB datasets that ran without errors \cite{olson2017pmlb}; the toy datasets
 in Figure~\ref{fig:axis-vs-sphere} are qualitative illustrations only. Features
@@ -255,19 +259,22 @@ computational studies are left for future work.
         width=0.80\textwidth,
         height=0.26\textheight,
         keepaspectratio
-    ]{Figure_2_forest_regime.png}
-    \caption{Winning forest model across benchmark datasets as a function of
-    sample size and feature count. The pattern is exploratory and does not
-    provide a deterministic rule, but it suggests that spherical forests are a
-    useful complement in some classification regimes.}
-    \label{fig:regime}
+    ]{Figure_2_score_time_tradeoff.png}
+    \caption{Mean score and mean fit time over complete PMLB datasets. Scores
+    are balanced accuracy for classification and $R^2$ for regression. The
+    figure highlights the main empirical trade-off: spherical forests obtain
+    the best mean classification score among the compared forest methods, but
+    the current spherical split search is substantially slower; in regression,
+    ordinary and oblique forests remain both stronger and faster.}
+    \label{fig:score-time}
 \end{figure*}
 
-Figure~\ref{fig:regime} gives a compact empirical regime map. It should be read
-cautiously: the number of rows and predictors alone does not fully determine
-when spherical splits help. The missing variable is likely geometric: whether
-the target depends on local neighborhoods, clusters, or distance-to-prototype
-effects.
+Figure~\ref{fig:score-time} shows why the result should be read as a
+statistical signal rather than as a practical speed claim. Spherical forests
+are the strongest classification model on mean score, but they are currently
+orders of magnitude slower than ordinary forests. The regression panel also
+clarifies a negative result: spherical geometry alone does not improve the
+forest benchmark when the target is continuous.
 
 \section{Discussion and limitations}
 
@@ -308,13 +315,13 @@ and spherical split candidates at each node, possibly with a small lookahead
 window. Such a model would keep the interpretability of recursive partitioning
 while allowing the geometry of each decision to adapt locally.
 
-\section*{Data and software availability}
+\section*{Data and code availability}
 
 The PMLB datasets used in the experiments are publicly available
 \cite{olson2017pmlb}. An open-source implementation of spherical trees,
 together with scripts for reproducing the results presented in this paper, is
-available in the \texttt{treeple} package at
-\url{https://github.com/neurodata/treeple}.
+available in the \texttt{treeple}-based repository at
+\url{https://github.com/MathiasValla/spherical-decision-trees}.
 
 \section*{Declaration of competing interest}
 
@@ -324,8 +331,15 @@ paper.
 
 \section*{Funding}
 
-This research did not receive any specific grant from funding agencies in the
-public, commercial, or not-for-profit sectors.
+This work was conducted within the Research Chair DIALog under the aegis of the
+Risk Foundation, a joint initiative by Universit\'e Paris-Dauphine PSL and CNP
+Assurances.
+
+\section*{Acknowledgments}
+
+Work(s) conducted within the Research Chair DIALog under the aegis of the Risk
+Foundation, a joint initiative by Universit\'e Paris-Dauphine PSL and CNP
+Assurances.
 
 \section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
 
@@ -363,9 +377,10 @@ Pedregosa, F. et al.
 \newblock \emph{Journal of Machine Learning Research}, 12:2825--2830, 2011.
 
 \bibitem{treeple2026}
-NeuroData.
-\newblock \texttt{treeple}: tree-based estimators for Python.
-\newblock \url{https://github.com/neurodata/treeple}, 2026.
+Valla, M. and NeuroData.
+\newblock Spherical decision trees: \texttt{treeple}-based implementation and
+reproduction scripts.
+\newblock \url{https://github.com/MathiasValla/spherical-decision-trees}, 2026.
 
 \end{thebibliography}
 

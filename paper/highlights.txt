@@ -2,4 +2,4 @@ Spherical tree splits test membership in learned hyperspheres.
 Distant sphere centers locally recover linear decision frontiers.
 CART cost-complexity pruning applies without changing the criterion.
 Spherical forests improve mean classification performance in PMLB tests.
-Open-source code and reproduction scripts are available in treeple.
+Open-source code and reproduction scripts are available on GitHub.

@@ -12,6 +12,17 @@ treeple
 
 treeple is a scikit-learn compatible API for building state-of-the-art decision trees. These include unsupervised trees, oblique trees, uncertainty trees, quantile trees and causal trees.
 
+Spherical Decision Trees Article
+================================
+
+This fork contains the spherical decision tree and spherical random forest
+prototype used in the article "Spherical splits for decision trees and random
+forests." The article source, figures, benchmark outputs, and reproduction
+instructions are available in
+[`SPHERICAL_TREES_REPRODUCING_RESULTS.md`](SPHERICAL_TREES_REPRODUCING_RESULTS.md).
+
+Repository: <https://github.com/MathiasValla/spherical-decision-trees>
+
 Tree-models have withstood the test of time, and are consistently used for modern-day data science and machine learning applications. They especially perform well when there are limited samples for a problem and are flexible learners that can be applied to a wide variety of different settings, such as tabular, images, time-series, genomics, EEG data and more.
 
 Note that this package was originally named ``scikit-tree`` but was renamed to ``treeple`` after version 0.8.0. version <0.8.0 is still available at <https://pypi.org/project/scikit-tree/>.
