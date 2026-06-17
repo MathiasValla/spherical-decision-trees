@@ -161,7 +161,7 @@ jobs:
     needs: [build_wheels, build-wheels-m1, build_sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: all
 

@@ -35,7 +35,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Download artifact from "Build_Wheels" workflow
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist  # Match name used in build_wheels.yml upload artifact step
           path: dist
